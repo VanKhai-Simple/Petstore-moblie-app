@@ -5,10 +5,11 @@ const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
   const [isLogin, setIsLogin] = useState(false);
+  const [favorites, setFavorites] = useState([]);
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isFirstLaunch, setIsFirstLaunch] = useState(null);
+  const [isFirstLaunch, setIsFirstLaunch] = useState(false);
 
   useEffect(() => {
     appInit();
@@ -40,8 +41,11 @@ export const AppProvider = ({ children }) => {
     try {
       // 1. Kiểm tra Onboarding (đã xem giới thiệu chưa)
       const launchedValue = await AsyncStorage.getItem('alreadyLaunched');
-      firstLaunch = launchedValue === null;
-      setIsFirstLaunch(firstLaunch);
+
+// firstLaunch = launchedValue === null;  // tạm tắt logic kiểm tra lần đầu
+firstLaunch = false;                     // ép app không vào onboarding
+
+setIsFirstLaunch(firstLaunch);
 
       // Lần đầu mở app: hiển thị Onboarding trước, chưa chạy Splash.
       if (firstLaunch) {
@@ -92,6 +96,8 @@ export const AppProvider = ({ children }) => {
       isLogin, setIsLogin, 
       user, setUser, 
       token, setToken,
+      favorites,
+  setFavorites,
       isLoading, isFirstLaunch, setIsFirstLaunch,
       completeOnboarding,
       logout // Export hàm logout để dùng ở màn Profile

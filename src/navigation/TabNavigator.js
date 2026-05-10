@@ -5,7 +5,10 @@ import { MaterialIcons, FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Import các màn hình tương ứng
-import { HomeScreen, FavoriteScreen } from '../screens/PlaceholderScreens';
+
+//import {HomeScreen,FavoriteScreen } from '../screens/PlaceholderScreens';
+import HomeScreen from '../screens/HomeScreen';
+import FavoriteScreen from '../screens/FavoriteScreen';
 import { ProductListScreen } from '../screens/ProductListScreen';
 import { CartScreen } from '../screens/CartScreen';
 import { useCart } from '../context/CartContext';
