@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Petstore_mobile_Blank_template",
-    "slug": "Petstore_mobile_Blank_template",
+    "name": "Tactile Sanctuary",
+    "slug": "tactile-sanctuary-pet-shop",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#FCF4EF"
     },
     "ios": {
       "supportsTablet": true
@@ -18,7 +18,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#FCF4EF"
       },
       "edgeToEdgeEnabled": true
     },

@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, FlatList, Animated, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAppContext } from '../context/AppContext';
 
 const { width, height } = Dimensions.get('window');
@@ -34,13 +33,10 @@ export default function OnboardingScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollX = useRef(new Animated.Value(0)).current;
   const slidesRef = useRef(null);
-  const { setIsFirstLaunch } = useAppContext();
+  const { completeOnboarding } = useAppContext();
 
   const handleDone = async () => {
-    try {
-      await AsyncStorage.setItem('alreadyLaunched', 'true');
-      setIsFirstLaunch(false);
-    } catch (err) { console.log(err); }
+    await completeOnboarding();
   };
 
   const renderItem = ({ item, index }) => {

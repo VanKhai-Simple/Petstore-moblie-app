@@ -2,9 +2,13 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialIcons, FontAwesome5, Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Import các màn hình tương ứng
-import { HomeScreen, ShopScreen, FavoriteScreen, CartScreen } from '../screens/PlaceholderScreens';
+import { HomeScreen, FavoriteScreen } from '../screens/PlaceholderScreens';
+import { ProductListScreen } from '../screens/ProductListScreen';
+import { CartScreen } from '../screens/CartScreen';
+import { useCart } from '../context/CartContext';
 
 // import HomeScreen from '../screens/HomeScreen';
 // import ShopScreen from '../screens/ShopScreen';
@@ -15,12 +19,22 @@ import ProfileScreen from '../screens/ProfileScreen';
 const Tab = createBottomTabNavigator();
 
 export default function TabNavigator() {
+  const { itemCount } = useCart();
+  const insets = useSafeAreaInsets();
+
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false, // Mình tự custom label nên ẩn cái mặc định đi
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [
+          styles.tabBar,
+          {
+            height: 82 + insets.bottom,
+            paddingBottom: Math.max(insets.bottom, 8)
+          }
+        ],
+        tabBarItemStyle: styles.tabBarItem,
       }}
     >
       <Tab.Screen 
@@ -34,7 +48,7 @@ export default function TabNavigator() {
       />
       <Tab.Screen 
         name="Shop" 
-        component={ShopScreen}
+        component={ProductListScreen}
         options={{
           tabBarIcon: ({ focused }) => (
             <TabItem icon="paw" label="Cửa hàng" focused={focused} isFontAwesome />
@@ -55,7 +69,7 @@ export default function TabNavigator() {
         component={CartScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabItem icon="shopping-cart" label="Giỏ hàng" focused={focused} badge={3} />
+            <TabItem icon="shopping-cart" label="Giỏ hàng" focused={focused} badge={itemCount} />
           )
         }}
       />
@@ -102,10 +116,10 @@ const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
     zIndex: 10,
-    height: 80,
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
+    paddingTop: 8,
     // Đổ bóng cho TabBar
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
@@ -113,19 +127,24 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 20,
     borderTopWidth: 0,
+    overflow: 'visible',
+  },
+  tabBarItem: {
+    height: 64,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   itemContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
-    width: 80,
+    width: 64,
+    height: 56,
+    borderRadius: 32,
   },
   activeCircle: {
     backgroundColor: '#FFF0E6', // Màu cam nhạt vòng tròn
-    borderRadius: 40,
-    height: 70,
-    width: 70,
-    marginTop: -10, // Đẩy nhẹ lên trên một chút cho nó nổi bật
+    height: 58,
+    width: 64,
   },
   activeLabel: {
     color: '#A65215',
