@@ -8,8 +8,10 @@ type Product = any;
 interface ProductCardProps {
   product: Product;
   onPress: (product: Product) => void;
-  onAdd: (product: Product) => void;
+  onAdd: (product: Product) => void | Promise<void>;
 }
+
+const formatCurrency = (amount: number) => `${Math.round(amount).toLocaleString('vi-VN')} đ`;
 
 export function ProductCard({ product, onPress, onAdd }: ProductCardProps) {
   return (
@@ -27,9 +29,9 @@ export function ProductCard({ product, onPress, onAdd }: ProductCardProps) {
         <Text style={styles.name} numberOfLines={2}>
           {product.name}
         </Text>
-        <Text style={styles.price}>${product.price.toFixed(2)}</Text>
+        <Text style={styles.price}>{formatCurrency(product.price)}</Text>
         <TouchableOpacity style={styles.addButton} onPress={() => onAdd(product)}>
-          <Text style={styles.addText}>Add to Cart</Text>
+          <Text style={styles.addText}>Thêm vào giỏ</Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -46,7 +48,7 @@ export function FeaturedProductCard({ product, onPress, onAdd }: ProductCardProp
         <Text style={styles.description} numberOfLines={2}>
           {product.description}
         </Text>
-        <Text style={styles.featuredPrice}>${product.price.toFixed(2)}</Text>
+        <Text style={styles.featuredPrice}>{formatCurrency(product.price)}</Text>
       </View>
       <TouchableOpacity style={styles.roundAdd} onPress={() => onAdd(product)}>
         <Ionicons name="add" size={27} color={colors.white} />

@@ -11,6 +11,8 @@ import { productService } from '../api/productService';
 
 type Product = any;
 
+const formatCurrency = (amount: number) => `${Math.round(amount).toLocaleString('vi-VN')} đ`;
+
 const categoryDetails: Record<number, any> = {
   1: {
     breadcrumb: 'Shop › Nourishment',
@@ -251,7 +253,7 @@ export function ProductDetailScreen({ navigation, route }: any) {
   }, [initialProduct, productId]);
 
   const addSelected = () => {
-    Array.from({ length: quantity }).forEach(() => addToCart(product));
+    addToCart(product, quantity);
     navigation.navigate('MainTabs', { screen: 'Cart' });
   };
 
@@ -290,7 +292,7 @@ export function ProductDetailScreen({ navigation, route }: any) {
         <Text style={styles.breadcrumb}>{detail.breadcrumb}</Text>
         <Text style={styles.title}>{product.name}</Text>
         <View style={styles.priceRow}>
-          <Text style={styles.price}>${product.price.toFixed(2)}</Text>
+          <Text style={styles.price}>{formatCurrency(product.price)}</Text>
           <Text style={styles.rating}>★ {product.rating.toFixed(1)} ({product.reviewCount} reviews)</Text>
         </View>
         <Text style={styles.description}>{product.description}</Text>
@@ -322,7 +324,7 @@ export function ProductDetailScreen({ navigation, route }: any) {
         <TouchableOpacity activeOpacity={0.9} onPress={addSelected}>
           <LinearGradient colors={['#B85B0B', '#FF9D65']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.addButton}>
             <Ionicons name="cart-outline" size={18} color={colors.white} />
-            <Text style={styles.addText}>Add to Cart</Text>
+            <Text style={styles.addText}>Thêm vào giỏ</Text>
           </LinearGradient>
         </TouchableOpacity>
 
@@ -356,7 +358,7 @@ export function ProductDetailScreen({ navigation, route }: any) {
           <TouchableOpacity key={item.id} style={styles.curatedItem} onPress={() => navigation.push('ProductDetail', { productId: item.id })}>
             <Image source={item.image as ImageSourcePropType} style={styles.curatedImage} resizeMode="cover" />
             <Text style={styles.curatedName}>{item.name}</Text>
-            <Text style={styles.curatedPrice}>${item.price.toFixed(2)}</Text>
+            <Text style={styles.curatedPrice}>{formatCurrency(item.price)}</Text>
           </TouchableOpacity>
         ))}
       </ScrollView>

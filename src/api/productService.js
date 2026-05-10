@@ -1,9 +1,33 @@
-import { apiClient } from './client';
+import { apiClient, API_BASE_URL } from './client';
 import { products as fallbackProducts } from '../data/mockProducts';
 import { resolveProductImage } from '../data/localAssets';
 
 const isUsableImage = (imageUrl) =>
   Boolean(imageUrl && imageUrl.trim() && imageUrl.trim().toLowerCase() !== 'string');
+
+const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, '');
+
+const resolveDbImageUrl = (product) => {
+  const defaultImage = Array.isArray(product?.productImages)
+    ? product.productImages.find((image) => image?.isDefault)?.imageUrl ?? product.productImages[0]?.imageUrl
+    : undefined;
+  const imageUrl = product?.mainImage ?? product?.imageUrl ?? defaultImage;
+
+  if (!isUsableImage(imageUrl)) {
+    return undefined;
+  }
+
+  const trimmed = imageUrl.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith('/')) {
+    return `${API_ORIGIN}${trimmed}`;
+  }
+
+  return trimmed;
+};
 
 const normalizeApiList = (data) => {
   if (Array.isArray(data)) {
@@ -54,9 +78,7 @@ export const mapApiProduct = (product, index = 0) => {
     product.condition ??
     product.healthStatus ??
     fallback.description;
-  const imageUrl = isUsableImage(product.imageUrl ?? product.mainImage)
-    ? (product.imageUrl ?? product.mainImage ?? fallback.imageUrl)
-    : fallback.imageUrl;
+  const imageUrl = resolveDbImageUrl(product) ?? fallback.imageUrl;
 
   return {
     id: product.id,
@@ -67,6 +89,10 @@ export const mapApiProduct = (product, index = 0) => {
     rating: Number(product.rating ?? fallback.rating),
     reviewCount: Number(product.reviewCount ?? fallback.reviewCount),
     stock: Number(product.stock ?? product.stockQuantity ?? fallback.stock),
+    originalPrice: Number(product.price ?? fallback.price),
+    discountPrice: product.discountPrice == null ? null : Number(product.discountPrice),
+    discountPercent: product.discountPercent ?? null,
+    isDiscount: Boolean(product.isDiscount),
     categoryId: product.categoryId,
     category: mapCategory(product.category),
     badge: product.badge ?? (product.isDiscount && product.discountPercent ? `${product.discountPercent}% OFF` : fallback.badge),

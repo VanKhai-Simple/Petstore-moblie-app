@@ -15,7 +15,9 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use(async (config) => {
   const token = await AsyncStorage.getItem('userToken');
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    config.headers.Authorization = token.trim().toLowerCase().startsWith('bearer ')
+      ? token.trim()
+      : `Bearer ${token}`;
   }
   return config;
 });
@@ -24,6 +26,15 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     const fallback = 'Unable to reach the Pet Shop API. Showing curated local collection.';
-    return Promise.reject(new Error(error.response?.data?.message ?? error.message ?? fallback));
+    const message =
+      error.response?.data?.message ??
+      error.response?.data?.title ??
+      (typeof error.response?.data === 'string' ? error.response.data : undefined) ??
+      error.message ??
+      fallback;
+    const apiError = new Error(message);
+    apiError.status = error.response?.status;
+    apiError.data = error.response?.data;
+    return Promise.reject(apiError);
   }
 );

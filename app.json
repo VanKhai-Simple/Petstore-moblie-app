@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Tactile Sanctuary",
-    "slug": "tactile-sanctuary-pet-shop",
+    "name": "ManaPet Shop",
+    "slug": "manapet-shop",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",

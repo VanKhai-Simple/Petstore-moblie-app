@@ -1,11 +1,12 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { products } from '../data/mockProducts';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { cartService } from '../api/cartService';
 import { useAppContext } from './AppContext';
 
 type Product = any;
 
 interface CartLine {
+  id?: number | string;
+  cartId?: number;
   product: Product;
   quantity: number;
 }
@@ -14,37 +15,74 @@ interface CartContextValue {
   lines: CartLine[];
   itemCount: number;
   subtotal: number;
-  addToCart: (product: Product) => void;
-  removeFromCart: (productId: number) => void;
-  updateQuantity: (productId: number, quantity: number) => void;
+  isSyncing: boolean;
+  syncError: string | null;
+  refreshCart: () => Promise<void>;
+  addToCart: (product: Product, quantity?: number) => Promise<void>;
+  removeFromCart: (productId: number) => Promise<void>;
+  updateQuantity: (productId: number, quantity: number) => Promise<void>;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-const initialLines: CartLine[] = [
-  { product: products.find((product) => product.id === 6) ?? products[0], quantity: 1 },
-  { product: products.find((product) => product.id === 7) ?? products[1], quantity: 1 }
-];
+const getCartErrorMessage = (error: any, fallback: string) => {
+  if (error?.status === 401 || error?.status === 403) {
+    return 'Vui lòng đăng nhập lại để đồng bộ giỏ hàng.';
+  }
+
+  return error?.message ?? fallback;
+};
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [lines, setLines] = useState<CartLine[]>(initialLines);
+  const [lines, setLines] = useState<CartLine[]>([]);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
   const { token } = useAppContext();
+
+  const refreshCart = useCallback(async () => {
+    if (!token) {
+      setLines([]);
+      setSyncError(null);
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      const serverLines = await cartService.getMyCartLines();
+      setLines(serverLines);
+      setSyncError(null);
+    } catch (error: any) {
+      setSyncError(error?.message ?? 'Unable to sync cart.');
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [token]);
 
   useEffect(() => {
     let mounted = true;
 
     const loadServerCart = async () => {
       if (!token) {
+        setLines([]);
+        setSyncError(null);
         return;
       }
 
+      setIsSyncing(true);
       try {
         const serverLines = await cartService.getMyCartLines();
-        if (mounted && serverLines.length) {
+        if (mounted) {
           setLines(serverLines);
+          setSyncError(null);
         }
-      } catch {
-        // Swagger does not define the error shape for MyCart; keep the local cart when the server rejects it.
+      } catch (error: any) {
+        if (mounted) {
+          setSyncError(error?.message ?? 'Unable to sync cart.');
+        }
+      } finally {
+        if (mounted) {
+          setIsSyncing(false);
+        }
       }
     };
 
@@ -63,31 +101,73 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       lines,
       subtotal,
       itemCount,
-      addToCart(product) {
-        cartService.addToCart(product.id, 1).catch(() => {
-          // Cart API requires a valid login token; local cart remains usable when the server rejects the request.
-        });
+      isSyncing,
+      syncError,
+      refreshCart,
+      async addToCart(product, quantity = 1) {
+        if (!token) {
+          setSyncError('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.');
+          return;
+        }
 
-        setLines((current) => {
-          const existing = current.find((line) => line.product.id === product.id);
-          if (existing) {
-            return current.map((line) =>
-              line.product.id === product.id ? { ...line, quantity: line.quantity + 1 } : line
-            );
-          }
-          return [...current, { product, quantity: 1 }];
-        });
+        setIsSyncing(true);
+        try {
+          await cartService.addToCart(product.id, quantity);
+          await refreshCart();
+          setSyncError(null);
+        } catch (error: any) {
+          setSyncError(getCartErrorMessage(error, 'Không thêm được sản phẩm vào giỏ hàng.'));
+        } finally {
+          setIsSyncing(false);
+        }
       },
-      removeFromCart(productId) {
+      async removeFromCart(productId) {
+        const previousLines = lines;
+
+        if (!token) {
+          setSyncError('Vui lòng đăng nhập để cập nhật giỏ hàng.');
+          return;
+        }
+
         setLines((current) => current.filter((line) => line.product.id !== productId));
+        setIsSyncing(true);
+        try {
+          await cartService.removeItem(productId);
+          await refreshCart();
+          setSyncError(null);
+        } catch (error: any) {
+          setLines(previousLines);
+          setSyncError(getCartErrorMessage(error, 'Không xóa được sản phẩm khỏi giỏ hàng.'));
+        } finally {
+          setIsSyncing(false);
+        }
       },
-      updateQuantity(productId, quantity) {
+      async updateQuantity(productId, quantity) {
+        const nextQuantity = Math.max(1, quantity);
+        const previousLines = lines;
+
+        if (!token) {
+          setSyncError('Vui lòng đăng nhập để cập nhật giỏ hàng.');
+          return;
+        }
+
         setLines((current) =>
-          current.map((line) => (line.product.id === productId ? { ...line, quantity: Math.max(1, quantity) } : line))
+          current.map((line) => (line.product.id === productId ? { ...line, quantity: nextQuantity } : line))
         );
+        setIsSyncing(true);
+        try {
+          await cartService.updateQuantity(productId, nextQuantity);
+          await refreshCart();
+          setSyncError(null);
+        } catch (error: any) {
+          setLines(previousLines);
+          setSyncError(getCartErrorMessage(error, 'Không cập nhật được số lượng giỏ hàng.'));
+        } finally {
+          setIsSyncing(false);
+        }
       }
     };
-  }, [lines]);
+  }, [isSyncing, lines, refreshCart, syncError, token]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

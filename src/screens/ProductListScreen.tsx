@@ -11,12 +11,27 @@ import { productService } from '../api/productService';
 type Product = any;
 
 const baseCategoryOptions = [
-  { id: 'all', label: 'All', title: 'Pet Shop', kicker: 'PREMIUM STORE', subtitle: 'Curated essentials for every corner of your companion sanctuary.' },
-  { id: 1, label: 'Food', title: 'Dog Food', kicker: 'NOURISHMENT', subtitle: "Curated organic blends for your sanctuary's most loyal companion." },
-  { id: 2, label: 'Beds', title: 'Beds & Throws', kicker: 'SANCTUARY REST', subtitle: 'Soft orthopedic comfort, woven layers, and quiet premium resting spaces.' },
-  { id: 3, label: 'Dining', title: 'Dining', kicker: 'FEEDING RITUAL', subtitle: 'Sculpted bowls and elevated dining pieces for calm daily routines.' },
-  { id: 4, label: 'Toys', title: 'Play', kicker: 'ENRICHMENT', subtitle: 'Gentle textures and thoughtful play pieces for engaged companions.' },
-  { id: 5, label: 'Grooming', title: 'Grooming', kicker: 'BOTANICAL CARE', subtitle: 'Clean, calming care rituals with a soft luxury finish.' }
+  {
+    id: 'all',
+    label: 'Tất cả',
+    title: 'ManaPet Store',
+    kicker: 'CỬA HÀNG THÚ CƯNG',
+    subtitle: 'Danh sách sản phẩm và thú cưng được lấy trực tiếp từ ManaPet.'
+  },
+  {
+    id: 1,
+    label: 'Chó cảnh',
+    title: 'Chó cảnh',
+    kicker: 'CÚN CƯNG',
+    subtitle: 'Các bé cún đang có tại ManaPet, kèm thông tin sức khỏe và nguồn gốc.'
+  },
+  {
+    id: 2,
+    label: 'Mèo cảnh',
+    title: 'Mèo cảnh',
+    kicker: 'MÈO CƯNG',
+    subtitle: 'Các bé mèo cảnh đang sẵn sàng về nhà mới.'
+  }
 ];
 
 const buildCategoryOptions = (categories: any[]) => {
@@ -30,33 +45,33 @@ const buildCategoryOptions = (categories: any[]) => {
       id: category.id,
       label: category.name,
       title: category.name,
-      kicker: 'PET SHOP',
-      subtitle: category.description ?? 'Premium pet shop products loaded from the live store API.'
+      kicker: 'DANH MỤC',
+      subtitle: category.description ?? `Sản phẩm thuộc danh mục ${category.name} trên ManaPet.`
     }))
   ];
 };
 
 const priceOptions = [
-  { key: 'all', label: 'All prices' },
-  { key: 'under40', label: 'Under $40' },
-  { key: '40to80', label: '$40 - $80' },
-  { key: 'over80', label: 'Over $80' }
+  { key: 'all', label: 'Tất cả giá' },
+  { key: 'under500k', label: 'Dưới 500K' },
+  { key: '500kTo1m', label: '500K - 1 triệu' },
+  { key: '1mTo3m', label: '1 - 3 triệu' },
+  { key: 'over3m', label: 'Trên 3 triệu' }
 ];
 
 const sortOptions = [
-  { key: 'popular', label: 'Popular', shortLabel: 'Popular' },
-  { key: 'priceLow', label: 'Price: Low to High', shortLabel: 'Price Low' },
-  { key: 'priceHigh', label: 'Price: High to Low', shortLabel: 'Price High' },
-  { key: 'rating', label: 'Top Rated', shortLabel: 'Top Rated' },
-  { key: 'newest', label: 'Newest Arrivals', shortLabel: 'Newest' },
-  { key: 'stock', label: 'Best Availability', shortLabel: 'Stock' }
+  { key: 'newest', label: 'Mới nhất', shortLabel: 'Mới nhất' },
+  { key: 'priceLow', label: 'Giá thấp đến cao', shortLabel: 'Giá thấp' },
+  { key: 'priceHigh', label: 'Giá cao đến thấp', shortLabel: 'Giá cao' },
+  { key: 'discount', label: 'Giảm giá nhiều nhất', shortLabel: 'Khuyến mãi' },
+  { key: 'stock', label: 'Còn hàng nhiều nhất', shortLabel: 'Tồn kho' }
 ];
 
 const defaultFilters = {
   categoryId: 'all' as string | number,
   priceKey: 'all',
-  minRating: 0,
-  inStockOnly: false
+  inStockOnly: false,
+  saleOnly: false
 };
 
 const sortProducts = (products: Product[], sortKey: string) => {
@@ -67,15 +82,16 @@ const sortProducts = (products: Product[], sortKey: string) => {
       return sorted.sort((left, right) => left.price - right.price);
     case 'priceHigh':
       return sorted.sort((left, right) => right.price - left.price);
-    case 'rating':
-      return sorted.sort((left, right) => right.rating - left.rating || right.reviewCount - left.reviewCount);
+    case 'discount':
+      return sorted.sort((left, right) => (right.discountPercent ?? 0) - (left.discountPercent ?? 0));
     case 'newest':
-      return sorted.sort((left, right) => right.id - left.id);
+      return sorted.sort(
+        (left, right) => new Date(right.createdAt ?? 0).getTime() - new Date(left.createdAt ?? 0).getTime()
+      );
     case 'stock':
       return sorted.sort((left, right) => right.stock - left.stock);
-    case 'popular':
     default:
-      return sorted.sort((left, right) => right.reviewCount - left.reviewCount || right.rating - left.rating);
+      return sorted.sort((left, right) => new Date(right.createdAt ?? 0).getTime() - new Date(left.createdAt ?? 0).getTime());
   }
 };
 
@@ -85,23 +101,27 @@ const filterProducts = (products: Product[], filters: typeof defaultFilters) => 
       return false;
     }
 
-    if (filters.priceKey === 'under40' && product.price >= 40) {
+    if (filters.priceKey === 'under500k' && product.price >= 500000) {
       return false;
     }
 
-    if (filters.priceKey === '40to80' && (product.price < 40 || product.price > 80)) {
+    if (filters.priceKey === '500kTo1m' && (product.price < 500000 || product.price > 1000000)) {
       return false;
     }
 
-    if (filters.priceKey === 'over80' && product.price <= 80) {
+    if (filters.priceKey === '1mTo3m' && (product.price < 1000000 || product.price > 3000000)) {
       return false;
     }
 
-    if (filters.minRating && product.rating < filters.minRating) {
+    if (filters.priceKey === 'over3m' && product.price <= 3000000) {
       return false;
     }
 
-    return !(filters.inStockOnly && product.stock <= 0);
+    if (filters.inStockOnly && product.stock <= 0) {
+      return false;
+    }
+
+    return !(filters.saleOnly && !product.isDiscount);
   });
 };
 
@@ -109,8 +129,8 @@ const getActiveFilterCount = (filters: typeof defaultFilters) => {
   let count = 0;
   if (filters.categoryId !== 'all') count += 1;
   if (filters.priceKey !== 'all') count += 1;
-  if (filters.minRating > 0) count += 1;
   if (filters.inStockOnly) count += 1;
+  if (filters.saleOnly) count += 1;
   return count;
 };
 
@@ -120,7 +140,7 @@ export function ProductListScreen({ navigation }: any) {
   const [sortOpen, setSortOpen] = useState(false);
   const [filters, setFilters] = useState(defaultFilters);
   const [draftFilters, setDraftFilters] = useState(defaultFilters);
-  const [sortKey, setSortKey] = useState('popular');
+  const [sortKey, setSortKey] = useState('newest');
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -217,30 +237,30 @@ export function ProductListScreen({ navigation }: any) {
         <View style={styles.controls}>
           <TouchableOpacity style={[styles.pill, activeFilterCount > 0 && styles.pillActive]} onPress={openFilters}>
             <Ionicons name="options-outline" size={18} color={colors.primary} />
-            <Text style={styles.pillText}>Filter{activeFilterCount ? ` (${activeFilterCount})` : ''}</Text>
+            <Text style={styles.pillText}>Bộ lọc{activeFilterCount ? ` (${activeFilterCount})` : ''}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.pill} onPress={() => setSortOpen(true)}>
             <Ionicons name="swap-vertical-outline" size={18} color={colors.primary} />
-            <Text style={styles.pillText}>Sort by:{'\n'}{selectedSort.shortLabel}</Text>
+            <Text style={styles.pillText}>Sắp xếp:{'\n'}{selectedSort.shortLabel}</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.metaRow}>
-          <Text style={styles.metaText}>{visibleProducts.length} products</Text>
-          <Text style={styles.metaText}>{loading ? 'Loading live API' : `Sorted by ${selectedSort.shortLabel}`}</Text>
+          <Text style={styles.metaText}>{visibleProducts.length} sản phẩm</Text>
+          <Text style={styles.metaText}>{loading ? 'Đang tải API' : `Theo ${selectedSort.shortLabel}`}</Text>
         </View>
 
         {error ? (
           <View style={styles.errorBanner}>
             <Ionicons name="cloud-offline-outline" size={17} color={colors.primary} />
-            <Text style={styles.errorText}>Live API unavailable. Showing local backup.</Text>
+            <Text style={styles.errorText}>Không tải được API. Đang hiển thị dữ liệu dự phòng.</Text>
           </View>
         ) : null}
 
         {loading ? (
           <View style={styles.loadingState}>
             <ActivityIndicator color={colors.primary} />
-            <Text style={styles.loadingText}>Loading products from server...</Text>
+            <Text style={styles.loadingText}>Đang tải sản phẩm từ server...</Text>
           </View>
         ) : visibleProducts.length ? (
           <>
@@ -262,10 +282,10 @@ export function ProductListScreen({ navigation }: any) {
               <>
                 <View style={styles.sectionHeader}>
                   <View style={styles.kickerRow}>
-                    <Text style={styles.kicker}>MORE TO LOVE</Text>
+                    <Text style={styles.kicker}>GỢI Ý THÊM</Text>
                     <View style={styles.kickerLine} />
                   </View>
-                  <Text style={styles.sectionTitle}>Complete the Sanctuary</Text>
+                  <Text style={styles.sectionTitle}>Thêm lựa chọn</Text>
                 </View>
                 <View style={styles.grid}>
                   {sanctuaryProducts.map((product) => (
@@ -278,10 +298,10 @@ export function ProductListScreen({ navigation }: any) {
         ) : (
           <View style={styles.emptyState}>
             <Ionicons name="search-outline" size={28} color={colors.primary} />
-            <Text style={styles.emptyTitle}>No matching products</Text>
-            <Text style={styles.emptyCopy}>Try another category, price range, or rating filter.</Text>
+            <Text style={styles.emptyTitle}>Không có sản phẩm phù hợp</Text>
+            <Text style={styles.emptyCopy}>Thử đổi danh mục, khoảng giá hoặc trạng thái còn hàng.</Text>
             <TouchableOpacity style={styles.emptyButton} onPress={resetFilters}>
-              <Text style={styles.emptyButtonText}>Reset Filters</Text>
+              <Text style={styles.emptyButtonText}>Xóa bộ lọc</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -313,15 +333,15 @@ function FilterModal({ visible, draftFilters, setDraftFilters, categoryOptions, 
           <View style={styles.sheetHandle} />
           <View style={styles.sheetHeader}>
             <View>
-              <Text style={styles.sheetKicker}>PET SHOP FILTER</Text>
-              <Text style={styles.sheetTitle}>Refine Products</Text>
+              <Text style={styles.sheetKicker}>BỘ LỌC MANAPET</Text>
+              <Text style={styles.sheetTitle}>Lọc sản phẩm</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
               <Ionicons name="close" size={20} color={colors.text} />
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.filterLabel}>Category</Text>
+          <Text style={styles.filterLabel}>Danh mục</Text>
           <View style={styles.chipWrap}>
             {categoryOptions.map((option: any) => (
               <TouchableOpacity
@@ -334,7 +354,7 @@ function FilterModal({ visible, draftFilters, setDraftFilters, categoryOptions, 
             ))}
           </View>
 
-          <Text style={styles.filterLabel}>Price Range</Text>
+          <Text style={styles.filterLabel}>Khoảng giá</Text>
           <View style={styles.chipWrap}>
             {priceOptions.map((option) => (
               <TouchableOpacity
@@ -347,34 +367,34 @@ function FilterModal({ visible, draftFilters, setDraftFilters, categoryOptions, 
             ))}
           </View>
 
-          <Text style={styles.filterLabel}>Shopping Preferences</Text>
-          <TouchableOpacity
-            style={[styles.preferenceRow, draftFilters.minRating === 4.8 && styles.preferenceActive]}
-            onPress={() => setDraftFilters((current: typeof defaultFilters) => ({ ...current, minRating: current.minRating === 4.8 ? 0 : 4.8 }))}
-          >
-            <View>
-              <Text style={styles.preferenceTitle}>Top rated only</Text>
-              <Text style={styles.preferenceCopy}>Show products rated 4.8 and above.</Text>
-            </View>
-            <Ionicons name={draftFilters.minRating === 4.8 ? 'checkmark-circle' : 'ellipse-outline'} size={22} color={colors.primary} />
-          </TouchableOpacity>
+          <Text style={styles.filterLabel}>Trạng thái</Text>
           <TouchableOpacity
             style={[styles.preferenceRow, draftFilters.inStockOnly && styles.preferenceActive]}
             onPress={() => setDraftFilters((current: typeof defaultFilters) => ({ ...current, inStockOnly: !current.inStockOnly }))}
           >
             <View>
-              <Text style={styles.preferenceTitle}>Available now</Text>
-              <Text style={styles.preferenceCopy}>Hide sold-out items from the shop.</Text>
+              <Text style={styles.preferenceTitle}>Còn hàng</Text>
+              <Text style={styles.preferenceCopy}>Ẩn các sản phẩm đã hết hàng.</Text>
             </View>
             <Ionicons name={draftFilters.inStockOnly ? 'checkmark-circle' : 'ellipse-outline'} size={22} color={colors.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.preferenceRow, draftFilters.saleOnly && styles.preferenceActive]}
+            onPress={() => setDraftFilters((current: typeof defaultFilters) => ({ ...current, saleOnly: !current.saleOnly }))}
+          >
+            <View>
+              <Text style={styles.preferenceTitle}>Đang khuyến mãi</Text>
+              <Text style={styles.preferenceCopy}>Chỉ hiển thị sản phẩm có giảm giá.</Text>
+            </View>
+            <Ionicons name={draftFilters.saleOnly ? 'checkmark-circle' : 'ellipse-outline'} size={22} color={colors.primary} />
           </TouchableOpacity>
 
           <View style={styles.sheetActions}>
             <TouchableOpacity style={styles.resetButton} onPress={onReset}>
-              <Text style={styles.resetButtonText}>Reset</Text>
+              <Text style={styles.resetButtonText}>Xóa lọc</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.applyButton} onPress={onApply}>
-              <Text style={styles.applyButtonText}>Apply Filter</Text>
+              <Text style={styles.applyButtonText}>Áp dụng</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -391,8 +411,8 @@ function SortModal({ visible, sortKey, onClose, onSelect }: any) {
         <View style={styles.sortSheet}>
           <View style={styles.sheetHeader}>
             <View>
-              <Text style={styles.sheetKicker}>SORT BY</Text>
-              <Text style={styles.sheetTitle}>Product Order</Text>
+              <Text style={styles.sheetKicker}>SẮP XẾP THEO</Text>
+              <Text style={styles.sheetTitle}>Sắp xếp</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
               <Ionicons name="close" size={20} color={colors.text} />

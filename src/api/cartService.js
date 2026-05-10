@@ -27,6 +27,8 @@ const mapCartLine = (item, index) => {
     : mapApiProduct({ id: item.productId, productName: item.productName, price: item.price }, index);
 
   return {
+    id: item.id ?? item.cartItemId ?? `${item.productId}-${index}`,
+    cartId: item.cartId,
     product,
     quantity: Number(item.quantity ?? 1)
   };
@@ -49,5 +51,25 @@ export const cartService = {
       quantity
     });
     return data;
+  },
+
+  async updateQuantity(productId, quantity) {
+    const { data } = await apiClient.put('/Cart/UpdateQuantity', {
+      productId,
+      quantity
+    });
+    return data;
+  },
+
+  async removeItem(productId) {
+    const { data } = await apiClient.delete(`/Cart/RemoveItem/${productId}`);
+    return data;
+  },
+
+  async getSelected(ids) {
+    const { data } = await apiClient.get('/Cart/GetSelected', {
+      params: { ids: Array.isArray(ids) ? ids.join(',') : ids }
+    });
+    return normalizeCartItems(data).map(mapCartLine).filter((line) => line.product?.id);
   }
 };

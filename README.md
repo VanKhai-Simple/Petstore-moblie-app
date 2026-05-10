@@ -1,4 +1,4 @@
-# Tactile Sanctuary Pet Shop
+# ManaPet Shop
 
 Premium Pet Shop mobile app built with Expo Go + React Native.
 

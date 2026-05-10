@@ -17,7 +17,7 @@ export function BrandHeader({ showSearch = true, onCartPress }: BrandHeaderProps
       <View style={styles.brandRow}>
         <Image source={require('../../assets/paw_icon.png')} style={styles.logo} />
         <Text style={styles.title} numberOfLines={1}>
-          Tactile Sanctuary
+          ManaPet Shop
         </Text>
       </View>
       <View style={styles.actions}>
