@@ -12,6 +12,7 @@ import {
 } from "react-native";
 
 import { LinearGradient } from "expo-linear-gradient";
+import FavoriteProductCard from "../components/FavoriteProductCard";
 
 import {
   MaterialCommunityIcons,
@@ -47,15 +48,6 @@ export default function HomeScreen() {
       image: require("../../assets/HomeScreen6.png"),
     },
   ];
-const toggleFavorite = (item) => {
-  const exists = favorites.find((p) => p.name === item.name);
-
-  if (exists) {
-    setFavorites(favorites.filter((p) => p.name !== item.name));
-  } else {
-    setFavorites([...favorites, item]);
-  }
-};
   return (
     <ScrollView
       style={styles.container}
@@ -226,56 +218,11 @@ colors={["#E89A5C", "#C66A2B"]}
 
       {/* PRODUCT LIST */}
       {products.map((item, index) => (
-        <View
+        <FavoriteProductCard
           key={index}
-          style={styles.card}
-        >
-          {/* IMAGE */}
-          <View style={styles.imageContainer}>
-            <Image
-              source={item.image}
-              style={styles.productImage}
-            />
-
-           <TouchableOpacity
-  style={styles.heart}
-  onPress={() => toggleFavorite(item)}
->
-  <Ionicons
-    name={
-      favorites.find((p) => p.name === item.name)
-        ? "heart"
-        : "heart-outline"
-    }
-    size={20}
-    color="#C86B2A"
-  />
-</TouchableOpacity>
-          </View>
-
-          {/* INFO */}
-          <View style={styles.info}>
-            <Text style={styles.title}>
-              {item.name}
-            </Text>
-
-            <Text style={styles.category}>
-              {item.category}
-            </Text>
-
-            <View style={styles.bottomRow}>
-<Text style={styles.price}>
-                {item.price}
-              </Text>
-
-              <TouchableOpacity style={styles.smallAddButton}>
-                <Text style={styles.plus}>
-                  +
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+          item={item}
+          onPress={() => {}}
+        />
       ))}
     </ScrollView>
   );
@@ -481,30 +428,23 @@ alignItems: "center",
     width: "100%",
     height: 350,
     borderRadius: 32,
-
     paddingTop: 12,
     paddingLeft: 24,
     paddingRight: 24,
     paddingBottom: 24,
-
     marginTop: 12,
     marginBottom: 26,
-
     backgroundColor: "#FFFFFF",
-
     overflow: "hidden",
-
     alignSelf: "center",
     position: "relative",
   },
-
   bigCardContent: {
     width: "58%",
     marginTop: -5,
     paddingTop: 8,
     zIndex: 2,
   },
-
   organicTag: {
     backgroundColor: "#CFF2C9",
     paddingHorizontal: 12,
@@ -512,13 +452,11 @@ alignItems: "center",
     borderRadius: 14,
     alignSelf: "flex-start",
   },
-
   organicText: {
     fontSize: 12,
     fontWeight: "600",
     color: "#2E6B2E",
   },
-
   bigTitle: {
     fontSize: 24,
     fontWeight: "700",
@@ -527,37 +465,31 @@ alignItems: "center",
     lineHeight: 32,
     letterSpacing: 0.3,
   },
-
   bigDesc: {
     fontSize: 14,
     color: "#5B3A20",
     marginTop: 12,
     lineHeight: 24,
   },
-
   bigPrice: {
     fontSize: 22,
     fontWeight: "700",
     color: "#4A2A12",
     marginTop: 18,
   },
-
   addButton: {
     backgroundColor: "#CFE5F5",
     paddingVertical: 12,
     paddingHorizontal: 22,
     borderRadius: 22,
-
     marginTop: 28,
     alignSelf: "flex-start",
   },
-
   addText: {
     color: "#1F3B4D",
     fontWeight: "700",
     fontSize: 15,
   },
-
   bigImage: {
     width: 300,
     height: 300,
@@ -565,90 +497,5 @@ alignItems: "center",
     right: 0,
     bottom: 0,
     resizeMode: "contain",
-  },
-
-  /* PRODUCT CARDS */
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    marginBottom: 22,
-    padding: 12,
-
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-
-  imageContainer: {
-    width: "100%",
-    height: 180,
-    borderRadius: 15,
-    overflow: "hidden",
-    backgroundColor: "#F8F5F2",
-    position: "relative",
-  },
-
-  productImage: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-
-  heart: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 3,
-  },
-
-  info: {
-    marginTop: 12,
-  },
-
-  title: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#4A3428",
-  },
-
-  category: {
-    fontSize: 13,
-    color: "#9A8F87",
-    marginTop: 4,
-  },
-
-  bottomRow: {
-    flexDirection: "row",
-justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 12,
-  },
-
-  price: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#C86B2A",
-  },
-
-  smallAddButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "#F1E3D6",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  plus: {
-    fontSize: 20,
-    color: "#C86B2A",
-    fontWeight: "bold",
   },
 });

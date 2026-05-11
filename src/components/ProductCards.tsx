@@ -2,6 +2,7 @@ import React from 'react';
 import { Image, ImageSourcePropType, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, shadow } from '../constants/theme';
+import { useAppContext } from '../context/AppContext';
 
 type Product = any;
 
@@ -14,6 +15,18 @@ interface ProductCardProps {
 const formatCurrency = (amount: number) => `${Math.round(amount).toLocaleString('vi-VN')} đ`;
 
 export function ProductCard({ product, onPress, onAdd }: ProductCardProps) {
+  const { favorites, setFavorites } = useAppContext();
+  const isFavorite = favorites?.find((p: any) => p.id === product.id || p.name === product.name);
+
+  const toggleFavorite = () => {
+    if (!favorites) return;
+    if (isFavorite) {
+      setFavorites(favorites.filter((p: any) => p.id !== product.id && p.name !== product.name));
+    } else {
+      setFavorites([...favorites, product]);
+    }
+  };
+
   return (
     <TouchableOpacity style={styles.card} activeOpacity={0.9} onPress={() => onPress(product)}>
       <View style={styles.imageWrap}>
@@ -23,6 +36,9 @@ export function ProductCard({ product, onPress, onAdd }: ProductCardProps) {
           </View>
         ) : null}
         <Image source={product.image as ImageSourcePropType} style={styles.image} />
+        <TouchableOpacity style={styles.heart} onPress={toggleFavorite}>
+          <Ionicons name={isFavorite ? "heart" : "heart-outline"} size={20} color={colors.primary || "#C86B2A"} />
+        </TouchableOpacity>
       </View>
       <View style={styles.cardBody}>
         <Text style={styles.rating}>★ {product.rating.toFixed(1)} ({product.reviewCount})</Text>
@@ -39,9 +55,26 @@ export function ProductCard({ product, onPress, onAdd }: ProductCardProps) {
 }
 
 export function FeaturedProductCard({ product, onPress, onAdd }: ProductCardProps) {
+  const { favorites, setFavorites } = useAppContext();
+  const isFavorite = favorites?.find((p: any) => p.id === product.id || p.name === product.name);
+
+  const toggleFavorite = () => {
+    if (!favorites) return;
+    if (isFavorite) {
+      setFavorites(favorites.filter((p: any) => p.id !== product.id && p.name !== product.name));
+    } else {
+      setFavorites([...favorites, product]);
+    }
+  };
+
   return (
     <TouchableOpacity style={styles.featured} activeOpacity={0.92} onPress={() => onPress(product)}>
-      <Image source={product.image as ImageSourcePropType} style={styles.featuredImage} />
+      <View style={{ position: 'relative' }}>
+        <Image source={product.image as ImageSourcePropType} style={styles.featuredImage} />
+        <TouchableOpacity style={styles.featuredHeart} onPress={toggleFavorite}>
+          <Ionicons name={isFavorite ? "heart" : "heart-outline"} size={20} color={colors.primary || "#C86B2A"} />
+        </TouchableOpacity>
+      </View>
       <View style={styles.featuredCopy}>
         <Text style={styles.rating}>★ {product.rating.toFixed(1)} ({product.reviewCount})</Text>
         <Text style={styles.featuredName}>{product.name}</Text>
@@ -74,6 +107,32 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     resizeMode: 'cover'
+  },
+  heart: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 3,
+    ...shadow
+  },
+  featuredHeart: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 3,
+    ...shadow
   },
   badge: {
     position: 'absolute',
