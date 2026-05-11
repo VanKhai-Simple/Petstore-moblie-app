@@ -5,35 +5,76 @@ const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
   const [isLogin, setIsLogin] = useState(false);
+  const [favorites, setFavorites] = useState([]);
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isFirstLaunch, setIsFirstLaunch] = useState(null);
+  const [isFirstLaunch, setIsFirstLaunch] = useState(false);
 
   useEffect(() => {
     appInit();
   }, []);
 
+  const loadSavedSession = async () => {
+    const savedToken = await AsyncStorage.getItem('userToken');
+    const savedUserData = await AsyncStorage.getItem('userData');
+
+    if (savedToken && savedUserData) {
+      setToken(savedToken);
+      setUser(JSON.parse(savedUserData)); // Parse chuỗi string thành object
+      setIsLogin(true); // Tự động đăng nhập
+      return;
+    }
+
+    setToken(null);
+    setUser(null);
+    setIsLogin(false);
+  };
+
+  const finishSplash = () => {
+    setTimeout(() => setIsLoading(false), 1500);
+  };
+
   const appInit = async () => {
+    let firstLaunch = false;
+
     try {
       // 1. Kiểm tra Onboarding (đã xem giới thiệu chưa)
       const launchedValue = await AsyncStorage.getItem('alreadyLaunched');
-      setIsFirstLaunch(launchedValue === null);
 
-      // 2. Kiểm tra Phiên đăng nhập (Token & User Data)
-      const savedToken = await AsyncStorage.getItem('userToken');
-      const savedUserData = await AsyncStorage.getItem('userData');
+// firstLaunch = launchedValue === null;  // tạm tắt logic kiểm tra lần đầu
+firstLaunch = false;                     // ép app không vào onboarding
 
-      if (savedToken && savedUserData) {
-        setToken(savedToken);
-        setUser(JSON.parse(savedUserData)); // Parse chuỗi string thành object
-        setIsLogin(true); // Tự động đăng nhập
+setIsFirstLaunch(firstLaunch);
+
+      // Lần đầu mở app: hiển thị Onboarding trước, chưa chạy Splash.
+      if (firstLaunch) {
+        setIsLoading(false);
+        return;
       }
+
+      // Những lần sau: Splash -> Login/Register hoặc MainTabs.
+      setIsLoading(true);
+      await loadSavedSession();
     } catch (error) {
       console.log("App Init Error:", error);
     } finally {
-      // Kết thúc loading sau 1.5s để SplashScreen biến mất
-      setTimeout(() => setIsLoading(false), 1500);
+      if (!firstLaunch) {
+        finishSplash();
+      }
+    }
+  };
+
+  const completeOnboarding = async () => {
+    try {
+      await AsyncStorage.setItem('alreadyLaunched', 'true');
+      setIsFirstLaunch(false);
+      setIsLoading(true);
+      await loadSavedSession();
+    } catch (error) {
+      console.log("Complete Onboarding Error:", error);
+    } finally {
+      finishSplash();
     }
   };
 
@@ -55,7 +96,10 @@ export const AppProvider = ({ children }) => {
       isLogin, setIsLogin, 
       user, setUser, 
       token, setToken,
+      favorites,
+  setFavorites,
       isLoading, isFirstLaunch, setIsFirstLaunch,
+      completeOnboarding,
       logout // Export hàm logout để dùng ở màn Profile
     }}>
       {children}

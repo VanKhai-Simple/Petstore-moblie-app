@@ -10,24 +10,29 @@ import SplashScreen from '../screens/SplashScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
+import { ProductDetailScreen } from '../screens/ProductDetailScreen';
 
 import ProfileScreen from '../screens/ProfileScreen';
 
 const Stack = createStackNavigator();
 
 export default function AppNavigation() {
-  const { isLoading, isLogin, isFirstLaunch } = useAppContext();
+  const { isLoading, isFirstLaunch } = useAppContext();
+const isLogin = true; // ép luôn đã đăng nhập
 
-  // 1. Nếu đang load từ AsyncStorage thì hiện Splash
-  if (isLoading) {
-    return <SplashScreen />;
+  // Đợi kiểm tra cờ first launch, không hiện Splash trước Onboarding.
+  if (isFirstLaunch === null) {
+    return null;
   }
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {isFirstLaunch ? (
-        // 2. Luồng cho người mới tải app
+        // 1. Lần đầu mở app: Onboarding trước
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+      ) : isLoading ? (
+        // 2. Sau Onboarding hoặc những lần mở app sau: Splash
+        <Stack.Screen name="Splash" component={SplashScreen} />
       ) : !isLogin ? (
         // 3. Luồng khi chưa đăng nhập
         <>
@@ -40,9 +45,8 @@ export default function AppNavigation() {
         <>
           <Stack.Screen name="MainTabs" component={TabNavigator} />
           <Stack.Screen name="Profile" component={ProfileScreen} />
-          
-          {/* <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
-          <Stack.Screen name="Filter" component={FilterScreen} options={{ presentation: 'modal' }} /> */}
+          <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+          {/* <Stack.Screen name="Filter" component={FilterScreen} options={{ presentation: 'modal' }} /> */}
         </>
       )}
     </Stack.Navigator>
