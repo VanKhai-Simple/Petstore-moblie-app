@@ -17,8 +17,8 @@ import ProfileScreen from '../screens/ProfileScreen';
 const Stack = createStackNavigator();
 
 export default function AppNavigation() {
-  const { isLoading, isFirstLaunch } = useAppContext();
-const isLogin = true; // ép luôn đã đăng nhập
+  const { isLoading , isLogin , isFirstLaunch } = useAppContext();
+  // const isLogin = true; // ép luôn đã đăng nhập
 
   // Đợi kiểm tra cờ first launch, không hiện Splash trước Onboarding.
   if (isFirstLaunch === null) {

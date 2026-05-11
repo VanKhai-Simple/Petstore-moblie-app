@@ -8,12 +8,15 @@ import {
   TouchableOpacity,
 } from "react-native";
 
+import { useAppContext } from "../context/AppContext";
 import {
   MaterialCommunityIcons,
   Feather,
 } from "@expo/vector-icons";
 
 export default function ProfileScreen() {
+
+  const { logout } = useAppContext();
   return (
     <ScrollView
       style={styles.container}
@@ -286,7 +289,7 @@ export default function ProfileScreen() {
       </TouchableOpacity>
 
       {/* LOGOUT */}
-      <TouchableOpacity style={styles.logoutBtn}>
+      <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
         <Feather
           name="log-out"
           size={18}
