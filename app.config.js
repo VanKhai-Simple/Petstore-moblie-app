@@ -1,7 +1,9 @@
-{
+import 'dotenv/config'; // Nạp biến môi trường từ file .env
+
+export default {
   "expo": {
-    "name": "Pet store",
-    "slug": "Pet store",
+    "name": "Petstore_mobile_Blank_template",
+    "slug": "Petstore_mobile_Blank_template",
     "version": "1.0.0",
     "scheme": "petstore-mobile",
     "orientation": "portrait",
@@ -13,11 +15,11 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-
-    "facebookAppId": "123456789012345",
+    
+    "facebookAppId": process.env.FACEBOOK_APP_ID, 
     "facebookDisplayName": "Pet Shop App",
-    "facebookScheme": "fb123456789012345",
-
+    "facebookScheme": `fb${process.env.FACEBOOK_APP_ID}`,
+    
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.vankhai.petstore"
@@ -37,4 +39,4 @@
       "expo-web-browser"
     ]
   }
-}
+};

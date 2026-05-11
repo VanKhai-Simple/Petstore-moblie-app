@@ -1,11 +1,19 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, FontAwesome } from '@expo/vector-icons'; 
 import { useAppContext } from '../context/AppContext';
 import { userApi } from '../api/userApi';
 import TopToast from '../components/TopToast';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// --- IMPORT MỚI ---
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
+import * as Facebook from 'expo-auth-session/providers/facebook';
+import { GOOGLE_ANDROID_CLIENT_ID_RELEASE ,GOOGLE_WEB_CLIENT_ID, FACEBOOK_APP_ID } from '@env';
+
+WebBrowser.maybeCompleteAuthSession(); // Cần thiết để đóng cửa sổ trình duyệt sau khi login
 
 export default function LoginScreen({ navigation }) {
   const { setIsLogin, setToken, setUser } = useAppContext();
@@ -15,78 +23,154 @@ export default function LoginScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false); 
   const [toast, setToast] = useState({ msg: '', type: '' });
 
+  // --- CẤU HÌNH GOOGLE ---
+  const [gRequest, gResponse, gPromptAsync] = Google.useAuthRequest({
+    androidClientId: GOOGLE_ANDROID_CLIENT_ID_RELEASE,
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+    selectAccount: true,
+  });
+
+  // --- CẤU HÌNH FACEBOOK ---
+  const [fRequest, fResponse, fPromptAsync] = Facebook.useAuthRequest({
+    clientId: FACEBOOK_APP_ID,
+  });
+
   const showMsg = (msg, type = 'error') => setToast({ msg, type });
+
+  // Xử lý sau khi nhận được Response từ Google/Facebook
+  // useEffect(() => {
+  //   if (gResponse?.type === 'success') {
+  //     console.log("Google Access Token:", gResponse); // Debug token Google
+  //     handleSocialLogin('google', gResponse.authentication.accessToken);
+  //   }
+  // }, [gResponse]);
+
+
+  const fetchGoogleInfo = async (token) => {
+    try {
+      const res = await fetch('https://www.googleapis.com/userinfo/v2/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const info = await res.json();
+      
+      // Sau khi có info, đóng gói thành DTO gửi về Backend
+      await handleSocialLogin({
+        email: info.email,
+        fullName: info.name,
+        provider: 'Google',
+        externalId: info.id
+      });
+    } catch (e) {
+      showMsg("Không lấy được thông tin Google");
+      setLoading(false);
+    }
+  };
+
+  // --- HÀM LẤY INFO TỪ FACEBOOK ---
+  const fetchFacebookInfo = async (token) => {
+    try {
+      const res = await fetch(`https://graph.facebook.com/me?access_token=${token}&fields=id,name,email`);
+      const info = await res.json();
+      
+      await handleSocialLogin({
+        email: info.email || `${info.id}@facebook.com`, // FB đôi khi không trả email nếu user ko public
+        fullName: info.name,
+        provider: 'Facebook',
+        externalId: info.id
+      });
+    } catch (e) {
+      showMsg("Không lấy được thông tin Facebook");
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (gResponse?.type === 'success') {
+      setLoading(true); // Bật loading ngay khi bấm thành công
+      fetchGoogleInfo(gResponse.authentication.accessToken);
+    } else if (gResponse?.type === 'cancel') {
+      setLoading(false);
+    }
+  }, [gResponse]);
+
+  useEffect(() => {
+    if (fResponse?.type === 'success') {
+      setLoading(true);
+      fetchFacebookInfo(fResponse.authentication.accessToken);
+    }
+  }, [fResponse]);
+
+  // Hàm dùng chung để gửi Token Social về Backend ASP.NET của ông
+  const handleSocialLogin = async (socialDTO) => {
+    setLoading(true);
+    try {
+      // socialDTO lúc này đã khớp hoàn toàn với Class ExternalLoginRequest bên C#
+      const response = await userApi.loginSocial(socialDTO);
+      const result = await response.json();
+
+      if (response.ok) {
+        processLoginSuccess(result);
+      } else {
+        showMsg(result.message || "Lỗi xác thực phía Server");
+      }
+    } catch (error) {
+      showMsg("Lỗi kết nối Server!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Tách logic xử lý thành công ra để dùng chung cho cả Login thường và Social
+  const processLoginSuccess = async (result) => {
+    showMsg("Đăng nhập thành công!", "success");
+    await AsyncStorage.setItem('userToken', result.token);
+    await AsyncStorage.setItem('userData', JSON.stringify({ 
+      username: result.username, 
+      role: result.role 
+    }));
+    setToken(result.token);
+    setUser({ username: result.username, role: result.role }); 
+    setTimeout(() => {
+      setLoading(false);
+      setIsLogin(true);
+    }, 1000);
+  };
 
   const handleLogin = async () => {
     const u = username.trim();
     const p = password.trim();
-
     if (!u || !p) return showMsg("Vui lòng điền đủ thông tin!");
-
     setLoading(true);
     try {
       const response = await userApi.login({ username: u, password: p });
-      const contentType = response.headers.get("content-type");
-      let result;
-
-      if (contentType && contentType.indexOf("application/json") !== -1) {
-        result = await response.json();
-      } else {
-        result = { message: await response.text() };
-      }
+      const result = response.headers.get("content-type")?.includes("application/json") 
+                     ? await response.json() : { message: await response.text() };
 
       if (response.ok) {
-        showMsg("Đăng nhập thành công!", "success");
-
-        await AsyncStorage.setItem('userToken', result.token);
-        await AsyncStorage.setItem('userData', JSON.stringify({ 
-          username: result.username, 
-          role: result.role 
-        }));
-
-        setToken(result.token);
-        setUser({ username: result.username, role: result.role }); 
-
-        setTimeout(() => {
-          setLoading(false);
-          setIsLogin(true);
-        }, 1000);
+        processLoginSuccess(result);
       } else {
         setLoading(false);
-        // Lấy lỗi linh hoạt từ Server
-        let errorMsg = "Sai tài khoản hoặc mật khẩu";
-        if (result.errors) {
-          errorMsg = Object.values(result.errors).flat()[0];
-        } else if (result.message) {
-          errorMsg = result.message;
-        }
-        showMsg(errorMsg);
+        showMsg(result.message || "Sai tài khoản hoặc mật khẩu");
       }
     } catch (error) {
       setLoading(false);
-      console.log("Login Error:", error);
+      console.error("Login error:", error);
       showMsg("Lỗi kết nối API!");
     }
   };
 
   return (
     <View style={styles.container}>
-      {/* Component này sẽ xử lý việc trượt từ trên xuống */}
       <TopToast message={toast.msg} type={toast.type} onHide={() => setToast({ msg: '', type: '' })} />
       
       <View style={styles.card}>
         <Text style={styles.headerText}>Chào mừng trở lại</Text>
         <Text style={styles.subText}>Vui lòng nhập thông tin của bạn để đăng nhập.</Text>
 
+        {/* Input Username & Password giữ nguyên... */}
         <Text style={styles.label}>Tên đăng nhập / Email</Text>
         <View style={styles.inputContainer}>
-          <TextInput 
-            style={[styles.input, { flex: 1 }]} 
-            placeholder="Nhập tài khoản của bạn" 
-            value={username} 
-            onChangeText={setUsername} 
-            autoCapitalize="none" 
-          />
+          <TextInput style={[styles.input, { flex: 1 }]} placeholder="Nhập tài khoản của bạn" value={username} onChangeText={setUsername} autoCapitalize="none" />
         </View>
 
         <View style={{flexDirection: 'row', justifyContent: 'space-between', marginTop: 15}}>
@@ -94,13 +178,7 @@ export default function LoginScreen({ navigation }) {
             <TouchableOpacity><Text style={styles.forgotText}>Quên mật khẩu?</Text></TouchableOpacity>
         </View>
         <View style={styles.inputContainer}>
-          <TextInput 
-            style={[styles.input, { flex: 1 }]} 
-            placeholder="Nhập mật khẩu của bạn" 
-            secureTextEntry={!showPassword} 
-            value={password} 
-            onChangeText={setPassword} 
-          />
+          <TextInput style={[styles.input, { flex: 1 }]} placeholder="Nhập mật khẩu của bạn" secureTextEntry={!showPassword} value={password} onChangeText={setPassword} />
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
             <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color="#A65215" />
           </TouchableOpacity>
@@ -118,12 +196,22 @@ export default function LoginScreen({ navigation }) {
            <View style={styles.line} />
         </View>
 
+        {/* --- CẬP NHẬT NÚT BẤM SOCIAL --- */}
         <View style={styles.socialRow}>
-          <TouchableOpacity style={styles.socialBtn}>
+          <TouchableOpacity 
+            style={styles.socialBtn} 
+            onPress={() => gPromptAsync()} 
+            disabled={!gRequest || loading}
+          >
              <FontAwesome name="google" size={20} color="black" />
              <Text style={styles.socialBtnText}>Google</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.socialBtn}>
+
+          <TouchableOpacity 
+            style={styles.socialBtn} 
+            onPress={() => fPromptAsync()} 
+            disabled={!fRequest || loading}
+          >
              <FontAwesome name="facebook-square" size={20} color="#1877F2" />
              <Text style={styles.socialBtnText}>Facebook</Text>
           </TouchableOpacity>
@@ -137,8 +225,8 @@ export default function LoginScreen({ navigation }) {
   );
 }
 
-// ... Styles giữ nguyên như của ông
 const styles = StyleSheet.create({
+  // Giữ nguyên styles cũ của ông...
   container: { flex: 1, backgroundColor: '#FFF5F0', justifyContent: 'center', padding: 20 },
   card: { backgroundColor: 'white', borderRadius: 30, padding: 25, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 },
   headerText: { fontSize: 24, fontWeight: 'bold', color: '#402008', textAlign: 'center' },
