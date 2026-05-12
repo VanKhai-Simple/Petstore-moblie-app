@@ -362,7 +362,7 @@ export function ProductListScreen({ navigation }: any) {
             <Text style={styles.emptyCopy}>
               {searchTerm
                 ? `Không có sản phẩm khớp với "${searchTerm}". Hãy thử từ khóa khác hoặc xóa bộ lọc.`
-                : 'Thử đổi danh mục, khoảng giá hoặc trạng thái còn hàng.'}
+                : 'Thử đổi danh mục, khoảng giá hoặc trạng thái số lượng.'}
             </Text>
             <TouchableOpacity style={styles.emptyButton} onPress={resetFilters}>
               <Text style={styles.emptyButtonText}>Xóa bộ lọc</Text>

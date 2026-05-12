@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BrandHeader } from '../components/BrandHeader';
 import { FeaturedProductCard, ProductCard } from '../components/ProductCards';
@@ -79,11 +79,14 @@ const getCategoryIcon = (name = '') => {
 export default function HomeScreen({ navigation }) {
   const { addToCart } = useCart();
   const mountedRef = useRef(true);
+  const { width: windowWidth } = useWindowDimensions();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('all');
+  const [bannerIndex, setBannerIndex] = useState(0);
+  const bannerScrollRef = useRef(null);
 
   const loadHome = async () => {
     setLoading(true);
@@ -156,9 +159,14 @@ export default function HomeScreen({ navigation }) {
     }));
   }, [products]);
 
-  const heroProduct = filteredProducts[0] ?? null;
-  const spotlightProduct = filteredProducts.length > 1 ? filteredProducts[1] : null;
-  const gridProducts = filteredProducts.length > 2 ? filteredProducts.slice(2, 6) : [];
+  const bannerProducts = useMemo(() => {
+    const source = products.length ? products : [];
+    return source.slice(0, 4);
+  }, [products]);
+  const bannerWidth = Math.max(280, windowWidth - 40);
+  const bannerInterval = bannerWidth + 12;
+  const spotlightProduct = filteredProducts.length > 0 ? filteredProducts[0] : null;
+  const gridProducts = filteredProducts.length > 1 ? filteredProducts.slice(1, 5) : [];
 
   const discountCount = useMemo(() => products.filter((item) => item.isDiscount).length, [products]);
   const availableCount = useMemo(() => products.filter((item) => item.stock > 0).length, [products]);
@@ -180,6 +188,12 @@ export default function HomeScreen({ navigation }) {
 
   const resetFilters = () => {
     setSelectedCategoryId('all');
+  };
+
+  const handleBannerScroll = (event) => {
+    const x = event?.nativeEvent?.contentOffset?.x ?? 0;
+    const nextIndex = Math.round(x / bannerInterval);
+    setBannerIndex(nextIndex);
   };
 
   return (
@@ -220,48 +234,76 @@ export default function HomeScreen({ navigation }) {
               </View>
             ) : null}
 
-            {heroProduct ? (
-              <TouchableOpacity style={styles.heroCard} activeOpacity={0.92} onPress={() => openProduct(heroProduct)}>
-                <View style={styles.heroCopy}>
-                  <View style={styles.heroPills}>
-                    {heroProduct.badge ? (
-                      <View style={styles.salePill}>
-                        <Text style={styles.salePillText}>{heroProduct.badge}</Text>
+            {bannerProducts.length ? (
+              <View style={styles.bannerSection}>
+                <ScrollView
+                  ref={bannerScrollRef}
+                  horizontal
+                  decelerationRate="fast"
+                  showsHorizontalScrollIndicator={false}
+                  snapToInterval={bannerInterval}
+                  disableIntervalMomentum
+                  onMomentumScrollEnd={handleBannerScroll}
+                  contentContainerStyle={styles.bannerRow}
+                >
+                  {bannerProducts.map((bannerProduct, index) => (
+                    <TouchableOpacity
+                      key={bannerProduct.id}
+                      style={[styles.heroCard, { width: bannerWidth }]}
+                      activeOpacity={0.92}
+                      onPress={() => openProduct(bannerProduct)}
+                    >
+                      <View style={styles.heroCopy}>
+                        <View style={styles.heroPills}>
+                          {bannerProduct.badge ? (
+                            <View style={styles.salePill}>
+                              <Text style={styles.salePillText}>{bannerProduct.badge}</Text>
+                            </View>
+                          ) : null}
+                        </View>
+
+                        <Text style={styles.heroTitle} numberOfLines={3}>
+                          {index === 0 ? 'Sản phẩm nổi bật' : index === 1 ? 'Ưu đãi hôm nay' : 'Gợi ý cho bạn'}
+                        </Text>
+                        <Text style={styles.heroName} numberOfLines={2}>
+                          {bannerProduct.name}
+                        </Text>
+                        <Text style={styles.heroDescription} numberOfLines={3}>
+                          {bannerProduct.description}
+                        </Text>
+
+                        <View style={styles.heroMetaRow}>
+                          <View style={styles.heroMetaItem}>
+                            <Ionicons name="pricetag-outline" size={14} color={colors.primary} />
+                            <Text style={styles.heroMetaText}>{formatCurrency(bannerProduct.price)}</Text>
+                          </View>
+                          <View style={styles.heroMetaItem}>
+                            <Ionicons name="cube-outline" size={14} color={colors.primary} />
+                            <Text style={styles.heroMetaText}>Số lượng: {bannerProduct.stock}</Text>
+                          </View>
+                        </View>
+
+                        <View style={styles.heroAction}>
+                          <Text style={styles.heroActionText}>Xem chi tiết</Text>
+                          <Ionicons name="arrow-forward" size={14} color={colors.white} />
+                        </View>
                       </View>
-                    ) : null}
-                  </View>
 
-                  <Text style={styles.heroTitle} numberOfLines={3}>
-                    {heroProduct.isDiscount ? 'Ưu đãi hôm nay' : 'Sản phẩm nổi bật'}
-                  </Text>
-                  <Text style={styles.heroName} numberOfLines={2}>
-                    {heroProduct.name}
-                  </Text>
-                  <Text style={styles.heroDescription} numberOfLines={3}>
-                    {heroProduct.description}
-                  </Text>
-
-                  <View style={styles.heroMetaRow}>
-                    <View style={styles.heroMetaItem}>
-                      <Ionicons name="pricetag-outline" size={14} color={colors.primary} />
-                      <Text style={styles.heroMetaText}>{formatCurrency(heroProduct.price)}</Text>
-                    </View>
-                    <View style={styles.heroMetaItem}>
-                      <Ionicons name="cube-outline" size={14} color={colors.primary} />
-                      <Text style={styles.heroMetaText}>{heroProduct.stock} còn hàng</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.heroAction}>
-                    <Text style={styles.heroActionText}>Xem chi tiết</Text>
-                    <Ionicons name="arrow-forward" size={14} color={colors.white} />
-                  </View>
+                      <View style={styles.heroVisual}>
+                        <Image source={bannerProduct.image} style={styles.heroImage} resizeMode="contain" />
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+                <View style={styles.bannerDots}>
+                  {bannerProducts.map((bannerProduct, index) => (
+                    <View
+                      key={bannerProduct.id}
+                      style={[styles.bannerDot, bannerIndex === index && styles.bannerDotActive]}
+                    />
+                  ))}
                 </View>
-
-                <View style={styles.heroVisual}>
-                  <Image source={heroProduct.image} style={styles.heroImage} resizeMode="contain" />
-                </View>
-              </TouchableOpacity>
+              </View>
             ) : null}
 
             <View style={styles.sectionHeader}>
@@ -322,7 +364,7 @@ export default function HomeScreen({ navigation }) {
               </View>
             ) : null}
 
-            {!heroProduct ? (
+            {!spotlightProduct ? (
               <View style={styles.emptyState}>
                 <Ionicons name="grid-outline" size={30} color={colors.primary} />
                 <Text style={styles.emptyTitle}>Không có sản phẩm phù hợp</Text>
@@ -495,7 +537,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF5EA',
     flexDirection: 'row',
     overflow: 'hidden',
-    marginBottom: 22,
+    marginRight: 12,
     ...shadow
   },
   heroCopy: {
@@ -579,6 +621,28 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 13,
     fontWeight: '900'
+  },
+  bannerSection: {
+    marginBottom: 22
+  },
+  bannerRow: {
+    paddingRight: 8
+  },
+  bannerDots: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 12
+  },
+  bannerDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#D8C8BB'
+  },
+  bannerDotActive: {
+    width: 18,
+    backgroundColor: colors.primary
   },
   heroVisual: {
     width: 136,

@@ -22,7 +22,7 @@ const getProductDetail = (product: Product) => {
     tabs: ['Mô tả', 'Thông tin', `Đánh giá\n(${product.reviewCount || 0})`],
     longCopy: product.description || 'Chưa có thông tin mô tả chi tiết cho sản phẩm này.',
     checks: [
-      product.stock > 0 ? `Còn ${product.stock} sản phẩm trong kho` : 'Hiện tại đã hết hàng',
+      product.stock > 0 ? `Số lượng: ${product.stock}` : 'Hết hàng',
       product.category?.name ? `Danh mục: ${product.category.name}` : 'Sản phẩm chính hãng',
       product.isDiscount ? 'Sản phẩm đang được giảm giá' : 'Chất lượng đảm bảo',
       product.badge ? `Ưu đãi: ${product.badge}` : 'Sẵn sàng giao hàng'
@@ -33,7 +33,6 @@ const getProductDetail = (product: Product) => {
 
 export function ProductDetailScreen({ navigation, route }: any) {
   const { addToCart, itemCount } = useCart();
-  const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const productId = route?.params?.productId;
@@ -53,6 +52,7 @@ export function ProductDetailScreen({ navigation, route }: any) {
   };
 
   const detail = useMemo(() => product ? getProductDetail(product) : null, [product]);
+  const isOutOfStock = Number(product?.stock ?? 0) <= 0;
   
   const curated = useMemo(() => {
     if (!product || curatedProducts.length === 0) return [];
@@ -63,7 +63,6 @@ export function ProductDetailScreen({ navigation, route }: any) {
 
   useEffect(() => {
     let mounted = true;
-    setQuantity(1);
     setLoading(true);
     setError('');
 
@@ -106,8 +105,8 @@ export function ProductDetailScreen({ navigation, route }: any) {
   }, [productId]);
 
   const addSelected = () => {
-    if (product) {
-      addToCart(product, quantity);
+    if (product && !isOutOfStock) {
+      addToCart(product);
       navigation.navigate('MainTabs', { screen: 'Cart' });
     }
   };
@@ -169,22 +168,23 @@ export function ProductDetailScreen({ navigation, route }: any) {
               <Text style={styles.price}>{formatCurrency(product.price)}</Text>
               <Text style={styles.rating}>★ {product.rating ? product.rating.toFixed(1) : '0.0'} ({product.reviewCount || 0} đánh giá)</Text>
             </View>
+            <View style={styles.stockRow}>
+              <Ionicons name="cube-outline" size={16} color={isOutOfStock ? colors.muted : colors.primary} />
+              <Text style={[styles.stockText, isOutOfStock && styles.stockTextMuted]}>
+                {isOutOfStock ? 'Hết hàng' : `Số lượng: ${Number(product.stock ?? 0)}`}
+              </Text>
+            </View>
             <Text style={styles.description}>{product.description}</Text>
 
-            <View style={styles.quantityBar}>
-              <TouchableOpacity onPress={() => setQuantity((value) => Math.max(1, value - 1))}>
-                <Ionicons name="remove" size={20} color={colors.primary} />
-              </TouchableOpacity>
-              <Text style={styles.quantity}>{quantity}</Text>
-              <TouchableOpacity onPress={() => setQuantity((value) => value + 1)}>
-                <Ionicons name="add" size={20} color={colors.primary} />
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity activeOpacity={0.9} onPress={addSelected}>
-              <LinearGradient colors={['#B85B0B', '#FF9D65']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.addButton}>
-                <Ionicons name="cart-outline" size={18} color={colors.white} />
-                <Text style={styles.addText}>Thêm vào giỏ</Text>
+            <TouchableOpacity activeOpacity={0.9} onPress={addSelected} disabled={isOutOfStock}>
+              <LinearGradient
+                colors={isOutOfStock ? ['#B7ADA5', '#D7CBC0'] : ['#B85B0B', '#FF9D65']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={[styles.addButton, isOutOfStock && styles.addButtonDisabled]}
+              >
+                <Ionicons name={isOutOfStock ? 'ban-outline' : 'cart-outline'} size={18} color={colors.white} />
+                <Text style={styles.addText}>{isOutOfStock ? 'Hết hàng' : 'Thêm vào giỏ'}</Text>
               </LinearGradient>
             </TouchableOpacity>
 
@@ -285,19 +285,12 @@ const styles = StyleSheet.create({
   priceRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
   price: { color: colors.primary, fontSize: 22, fontWeight: '900' },
   rating: { color: colors.primary, fontSize: 12, fontWeight: '800' },
+  stockRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
+  stockText: { color: colors.primary, fontSize: 12, fontWeight: '800' },
+  stockTextMuted: { color: colors.muted },
   description: { color: colors.muted, fontSize: 14, lineHeight: 21, fontWeight: '600', marginTop: 18 },
-  quantityBar: {
-    height: 48,
-    borderRadius: 24,
-    marginTop: 22,
-    paddingHorizontal: 20,
-    backgroundColor: '#FFEFE5',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between'
-  },
-  quantity: { color: colors.text, fontSize: 16, fontWeight: '900' },
   addButton: { height: 50, borderRadius: 25, marginTop: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, ...shadow },
+  addButtonDisabled: { opacity: 0.72 },
   addText: { color: colors.white, fontSize: 14, fontWeight: '900' },
   tabs: { marginTop: 42, height: 55, flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: colors.line },
   tab: { flex: 1, color: colors.muted, textAlign: 'center', fontSize: 12, fontWeight: '800' },

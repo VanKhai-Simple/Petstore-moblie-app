@@ -9,7 +9,7 @@ type Product = any;
 interface ProductCardProps {
   product: Product;
   onPress: (product: Product) => void;
-  onAdd: (product: Product) => void | Promise<void>;
+  onAdd: (product: Product, quantity?: number) => void | Promise<void>;
 }
 
 const formatCurrency = (amount: number) => `${Math.round(amount).toLocaleString('vi-VN')} đ`;
@@ -17,6 +17,8 @@ const formatCurrency = (amount: number) => `${Math.round(amount).toLocaleString(
 export function ProductCard({ product, onPress, onAdd }: ProductCardProps) {
   const { favorites, setFavorites } = useAppContext();
   const isFavorite = favorites?.find((p: any) => p.id === product.id || p.name === product.name);
+  const isOutOfStock = Number(product.stock ?? 0) <= 0;
+  const stockText = isOutOfStock ? 'Hết hàng' : `Số lượng: ${Number(product.stock ?? 0)}`;
 
   const toggleFavorite = () => {
     if (!favorites) return;
@@ -46,8 +48,13 @@ export function ProductCard({ product, onPress, onAdd }: ProductCardProps) {
           {product.name}
         </Text>
         <Text style={styles.price}>{formatCurrency(product.price)}</Text>
-        <TouchableOpacity style={styles.addButton} onPress={() => onAdd(product)}>
-          <Text style={styles.addText}>Thêm vào giỏ</Text>
+        <Text style={styles.stockText}>{stockText}</Text>
+        <TouchableOpacity
+          style={[styles.addButton, isOutOfStock && styles.addButtonDisabled]}
+          disabled={isOutOfStock}
+          onPress={() => onAdd(product)}
+        >
+          <Text style={[styles.addText, isOutOfStock && styles.addTextDisabled]}>{isOutOfStock ? 'Hết hàng' : 'Thêm vào giỏ'}</Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -57,6 +64,8 @@ export function ProductCard({ product, onPress, onAdd }: ProductCardProps) {
 export function FeaturedProductCard({ product, onPress, onAdd }: ProductCardProps) {
   const { favorites, setFavorites } = useAppContext();
   const isFavorite = favorites?.find((p: any) => p.id === product.id || p.name === product.name);
+  const isOutOfStock = Number(product.stock ?? 0) <= 0;
+  const stockText = isOutOfStock ? 'Hết hàng' : `Số lượng: ${Number(product.stock ?? 0)}`;
 
   const toggleFavorite = () => {
     if (!favorites) return;
@@ -69,23 +78,39 @@ export function FeaturedProductCard({ product, onPress, onAdd }: ProductCardProp
 
   return (
     <TouchableOpacity style={styles.featured} activeOpacity={0.92} onPress={() => onPress(product)}>
-      <View style={{ position: 'relative' }}>
+      <View style={styles.featuredMedia}>
         <Image source={product.image as ImageSourcePropType} style={styles.featuredImage} />
         <TouchableOpacity style={styles.featuredHeart} onPress={toggleFavorite}>
           <Ionicons name={isFavorite ? "heart" : "heart-outline"} size={20} color={colors.primary || "#C86B2A"} />
         </TouchableOpacity>
+        {product.badge ? (
+          <View style={[styles.featuredBadge, product.badge === 'LOW STOCK' && styles.lowBadge]}>
+            <Text style={styles.badgeText}>{product.badge}</Text>
+          </View>
+        ) : null}
       </View>
       <View style={styles.featuredCopy}>
-        <Text style={styles.rating}>★ {product.rating.toFixed(1)} ({product.reviewCount})</Text>
-        <Text style={styles.featuredName}>{product.name}</Text>
+        <View style={styles.featuredTopRow}>
+          <Text style={styles.rating}>★ {product.rating.toFixed(1)} ({product.reviewCount})</Text>
+        </View>
+        <Text style={styles.featuredName} numberOfLines={2}>{product.name}</Text>
         <Text style={styles.description} numberOfLines={2}>
           {product.description}
         </Text>
-        <Text style={styles.featuredPrice}>{formatCurrency(product.price)}</Text>
+        <View style={styles.featuredFooter}>
+          <View style={styles.featuredPriceStack}>
+            <Text style={styles.featuredPrice}>{formatCurrency(product.price)}</Text>
+            <Text style={styles.stockText}>{stockText}</Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.roundAdd, isOutOfStock && styles.roundAddDisabled]}
+            disabled={isOutOfStock}
+            onPress={() => onAdd(product)}
+          >
+            <Ionicons name="add" size={25} color={colors.white} />
+          </TouchableOpacity>
+        </View>
       </View>
-      <TouchableOpacity style={styles.roundAdd} onPress={() => onAdd(product)}>
-        <Ionicons name="add" size={27} color={colors.white} />
-      </TouchableOpacity>
     </TouchableOpacity>
   );
 }
@@ -124,7 +149,7 @@ const styles = StyleSheet.create({
   featuredHeart: {
     position: 'absolute',
     top: 10,
-    left: 10,
+    right: 10,
     width: 32,
     height: 32,
     borderRadius: 16,
@@ -176,7 +201,7 @@ const styles = StyleSheet.create({
   },
   addButton: {
     height: 36,
-    marginTop: 18,
+    marginTop: 12,
     borderRadius: 18,
     backgroundColor: colors.blueButton,
     alignItems: 'center',
@@ -188,9 +213,9 @@ const styles = StyleSheet.create({
     fontWeight: '800'
   },
   featured: {
-    minHeight: 192,
+    height: 184,
     marginBottom: 16,
-    paddingRight: 20,
+    paddingRight: 12,
     borderRadius: 30,
     backgroundColor: colors.card,
     flexDirection: 'row',
@@ -198,40 +223,92 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     ...shadow
   },
+  featuredMedia: {
+    width: 122,
+    height: 184,
+    flexShrink: 0,
+    position: 'relative',
+    backgroundColor: '#F7EEE8',
+    overflow: 'hidden'
+  },
   featuredImage: {
-    width: 120,
-    height: 192,
-    resizeMode: 'cover'
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain'
   },
   featuredCopy: {
     flex: 1,
-    paddingLeft: 18,
-    paddingRight: 12
+    paddingLeft: 14,
+    paddingRight: 4,
+    paddingVertical: 12,
+    justifyContent: 'space-between',
+    minWidth: 0
+  },
+  featuredTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
   },
   featuredName: {
     color: colors.text,
-    fontSize: 17,
-    lineHeight: 21,
+    fontSize: 15,
+    lineHeight: 19,
     fontWeight: '900'
   },
   description: {
     color: colors.muted,
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: 3
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 6
+  },
+  featuredFooter: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginTop: 10
+  },
+  featuredPriceStack: {
+    flex: 1,
+    minWidth: 0
   },
   featuredPrice: {
     color: colors.primary,
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '900',
-    marginTop: 20
+    lineHeight: 24
+  },
+  stockText: {
+    color: colors.muted,
+    fontSize: 11,
+    fontWeight: '800',
+    marginTop: 4
   },
   roundAdd: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center'
+  },
+  featuredBadge: {
+    position: 'absolute',
+    left: 8,
+    top: 8,
+    zIndex: 2,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 16,
+    backgroundColor: '#A4F28A'
+  },
+  roundAddDisabled: {
+    backgroundColor: colors.muted
+  },
+  addButtonDisabled: {
+    backgroundColor: '#E8DED6'
+  },
+  addTextDisabled: {
+    color: colors.muted
   }
 });
