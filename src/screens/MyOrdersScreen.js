@@ -7,15 +7,19 @@ import {
   Image, 
   TouchableOpacity, 
   ActivityIndicator, 
-  SafeAreaView 
+  SafeAreaView,
+  StatusBar
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { profileService } from '../api/profileService'; // Dùng service ông gửi
 import { colors } from '../constants/theme';
 
 export default function MyOrdersScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
+  const topInset = Math.max(insets.top, StatusBar.currentHeight || 0);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -95,7 +99,7 @@ export default function MyOrdersScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: topInset + 8 }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={24} color="#402008" />
         </TouchableOpacity>
@@ -139,7 +143,16 @@ export default function MyOrdersScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFDFB' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 15, paddingVertical: 10 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    paddingBottom: 10,
+    backgroundColor: '#FFFDFB',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F4E3D8'
+  },
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFF5F0', justifyContent: 'center', alignItems: 'center' },
   headerTitle: { fontSize: 18, fontWeight: '900', color: '#402008' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },

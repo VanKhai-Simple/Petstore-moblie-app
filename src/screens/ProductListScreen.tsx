@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BrandHeader } from '../components/BrandHeader';
 import { FeaturedProductCard, ProductCard } from '../components/ProductCards';
@@ -15,7 +15,7 @@ const baseCategoryOptions = [
     label: 'Tất cả',
     title: 'ManaPet Shop',
     kicker: 'CỬA HÀNG THÚ CƯNG',
-    subtitle: 'Danh sách sản phẩm và thú cưng được lấy trực tiếp từ ManaPet.'
+    subtitle: 'Danh sách sản phẩm và thú cưng được cập nhật hằng ngày.'
   },
   {
     id: 1,
@@ -143,48 +143,81 @@ export function ProductListScreen({ navigation }: any) {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
+  const [search, setSearch] = useState('');
+  const [bootstrapping, setBootstrapping] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     let mounted = true;
 
-    const loadStorefront = async () => {
-      setLoading(true);
+    const loadCategories = async () => {
+      try {
+        const apiCategories = await productService.getCategories();
+        if (!mounted) {
+          return;
+        }
+        setCategories(apiCategories);
+      } catch {
+        if (!mounted) {
+          return;
+        }
+        setCategories([]);
+      }
+    };
+
+    loadCategories();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    const timer = setTimeout(async () => {
+      const keyword = search.trim();
+      const isBootstrapping = bootstrapping;
+
+      if (isBootstrapping) {
+        setLoading(true);
+      } else {
+        setSearching(true);
+      }
+
       setError('');
 
       try {
-        const [apiProducts, apiCategories] = await Promise.all([
-          productService.getProducts(),
-          productService.getCategories()
-        ]);
+        const apiProducts = keyword
+          ? await productService.searchProducts(keyword)
+          : await productService.getProducts();
 
         if (!mounted) {
           return;
         }
 
         setProducts(apiProducts);
-        setCategories(apiCategories);
       } catch (loadError: any) {
         if (!mounted) {
           return;
         }
 
         setProducts([]);
-        setCategories([]);
         setError(loadError?.message ?? 'Không thể tải sản phẩm từ API.');
       } finally {
         if (mounted) {
           setLoading(false);
+          setSearching(false);
+          setBootstrapping(false);
         }
       }
-    };
-
-    loadStorefront();
+    }, 250);
 
     return () => {
       mounted = false;
+      clearTimeout(timer);
     };
-  }, []);
+  }, [search]);
 
   const visibleProducts = useMemo(() => {
     return sortProducts(filterProducts(products, filters), sortKey);
@@ -196,6 +229,7 @@ export function ProductListScreen({ navigation }: any) {
   const selectedSort = sortOptions.find((option) => option.key === sortKey) ?? sortOptions[0];
   const heroProducts = visibleProducts.slice(0, 5);
   const sanctuaryProducts = visibleProducts.slice(5);
+  const searchTerm = search.trim();
 
   const openProduct = (product: Product) => {
     const parentNavigation = navigation.getParent?.();
@@ -219,6 +253,7 @@ export function ProductListScreen({ navigation }: any) {
   const resetFilters = () => {
     setDraftFilters(defaultFilters);
     setFilters(defaultFilters);
+    setSearch('');
     setFilterOpen(false);
   };
 
@@ -233,6 +268,30 @@ export function ProductListScreen({ navigation }: any) {
         <Text style={styles.title}>{selectedCategory.title}</Text>
         <Text style={styles.subtitle}>{selectedCategory.subtitle}</Text>
 
+        <View style={styles.searchBox}>
+          <Ionicons name="search-outline" size={18} color={colors.primary} />
+          <TextInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Tìm sản phẩm"
+            placeholderTextColor={colors.muted}
+            style={styles.searchInput}
+            returnKeyType="search"
+          />
+          {search ? (
+            <TouchableOpacity style={styles.searchClear} onPress={() => setSearch('')}>
+              <Ionicons name="close-circle" size={20} color={colors.muted} />
+            </TouchableOpacity>
+          ) : null}
+        </View>
+
+        {searching ? (
+          <View style={styles.searchingBanner}>
+            <ActivityIndicator size="small" color={colors.primary} />
+            <Text style={styles.searchingText}>Đang tìm sản phẩm...</Text>
+          </View>
+        ) : null}
+
         <View style={styles.controls}>
           <TouchableOpacity style={[styles.pill, activeFilterCount > 0 && styles.pillActive]} onPress={openFilters}>
             <Ionicons name="options-outline" size={18} color={colors.primary} />
@@ -246,7 +305,9 @@ export function ProductListScreen({ navigation }: any) {
 
         <View style={styles.metaRow}>
           <Text style={styles.metaText}>{visibleProducts.length} sản phẩm</Text>
-          <Text style={styles.metaText}>{loading ? 'Đang tải API' : `Theo ${selectedSort.shortLabel}`}</Text>
+          <Text style={styles.metaText}>
+            {loading ? 'Đang tải API' : searching ? 'Đang tìm...' : searchTerm ? `Kết quả cho "${searchTerm}"` : `Theo ${selectedSort.shortLabel}`}
+          </Text>
         </View>
 
         {error ? (
@@ -298,7 +359,11 @@ export function ProductListScreen({ navigation }: any) {
           <View style={styles.emptyState}>
             <Ionicons name="search-outline" size={28} color={colors.primary} />
             <Text style={styles.emptyTitle}>Không có sản phẩm phù hợp</Text>
-            <Text style={styles.emptyCopy}>Thử đổi danh mục, khoảng giá hoặc trạng thái còn hàng.</Text>
+            <Text style={styles.emptyCopy}>
+              {searchTerm
+                ? `Không có sản phẩm khớp với "${searchTerm}". Hãy thử từ khóa khác hoặc xóa bộ lọc.`
+                : 'Thử đổi danh mục, khoảng giá hoặc trạng thái còn hàng.'}
+            </Text>
             <TouchableOpacity style={styles.emptyButton} onPress={resetFilters}>
               <Text style={styles.emptyButtonText}>Xóa bộ lọc</Text>
             </TouchableOpacity>
@@ -469,8 +534,47 @@ const styles = StyleSheet.create({
     lineHeight: 27,
     marginTop: 6
   },
+  searchBox: {
+    minHeight: 54,
+    borderRadius: 27,
+    backgroundColor: colors.card,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 20,
+    marginBottom: 12,
+    ...shadow
+  },
+  searchInput: {
+    flex: 1,
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '700'
+  },
+  searchClear: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  searchingBanner: {
+    minHeight: 42,
+    borderRadius: 21,
+    backgroundColor: '#FFF2EA',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    marginBottom: 12
+  },
+  searchingText: {
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: '800'
+  },
   controls: {
-    marginTop: 38,
+    marginTop: 22,
     marginBottom: 14,
     flexDirection: 'row',
     gap: 14

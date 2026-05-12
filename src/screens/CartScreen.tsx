@@ -40,7 +40,7 @@ export function CartScreen({ navigation }: any) {
 
   return (
     <View style={styles.root}>
-      <BrandHeader showSearch={false} onCartPress={() => navigation.navigate('Cart')} />
+      <BrandHeader onCartPress={() => navigation.navigate('Cart')} />
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}

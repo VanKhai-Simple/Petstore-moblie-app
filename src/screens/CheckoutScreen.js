@@ -8,21 +8,25 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  SafeAreaView
+  SafeAreaView,
+  StatusBar
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { orderService } from '../api/orderService';
 import { useCart } from '../context/CartContext'; // Import để xóa giỏ hàng
 
 export default function CheckoutScreen({ route, navigation }) {
+  const insets = useSafeAreaInsets();
+  const topInset = Math.max(insets.top, StatusBar.currentHeight || 0);
   const { refreshCart } = useCart();
   const [loading, setLoading] = useState(false);
 
   // Lấy dữ liệu từ CartScreen truyền sang
   const selectedIds = route.params?.selectedIds || [];
   const totalPrice = route.params?.totalPrice || 0;
-  const shippingFee = 30000;
+  const shippingFee = 0;
 
   const [form, setForm] = useState({
     fullName: '',
@@ -59,7 +63,7 @@ export default function CheckoutScreen({ route, navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: topInset + 8 }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={24} color="#402008" />
         </TouchableOpacity>
@@ -118,7 +122,7 @@ export default function CheckoutScreen({ route, navigation }) {
 
           <View style={styles.row}>
             <Text style={styles.rowLabel}>Phí vận chuyển</Text>
-            <Text style={styles.rowValue}>{shippingFee.toLocaleString()}đ</Text>
+            <Text style={styles.rowValue}>Miễn phí</Text>
           </View>
 
           <View style={styles.line} />
@@ -150,7 +154,10 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     justifyContent: 'space-between', 
     paddingHorizontal: 15, 
-    paddingVertical: 10 
+    paddingBottom: 10,
+    backgroundColor: '#FFFDFB',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F4E3D8'
   },
   backBtn: { 
     width: 40, 

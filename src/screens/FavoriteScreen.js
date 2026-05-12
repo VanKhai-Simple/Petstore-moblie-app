@@ -70,12 +70,12 @@ export default function FavoriteScreen({ navigation }) {
           <View style={styles.kickerLine} />
         </View>
         <Text style={styles.title}>Sản phẩm đã lưu</Text>
-        <Text style={styles.subtitle}>Danh sách được làm mới từ API ManaPet để giá, ảnh và tồn kho luôn đúng.</Text>
+        <Text style={styles.subtitle}>Danh sách sản phẩm yêu thích của bạn.</Text>
 
         {error ? (
           <View style={styles.errorBanner}>
             <Ionicons name="cloud-offline-outline" size={17} color={colors.primary} />
-            <Text style={styles.errorText}>Không tải được dữ liệu từ API ManaPet.</Text>
+            <Text style={styles.errorText}>Không tải được dữ liệu từ.</Text>
           </View>
         ) : null}
 

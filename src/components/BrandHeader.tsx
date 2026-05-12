@@ -5,27 +5,30 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../constants/theme';
 
 interface BrandHeaderProps {
-  showSearch?: boolean;
+  showBack?: boolean;
+  onBackPress?: () => void;
   onCartPress?: () => void;
 }
 
-export function BrandHeader({ showSearch = true, onCartPress }: BrandHeaderProps) {
+export function BrandHeader({ showBack = false, onBackPress, onCartPress }: BrandHeaderProps) {
   const insets = useSafeAreaInsets();
 
   return (
     <View style={[styles.header, { height: 70 + insets.top, paddingTop: insets.top }]}>
-      <View style={styles.brandRow}>
-        <Image source={require('../../assets/Manapet-logo.png')} style={styles.logo} />
-        <Text style={styles.title} numberOfLines={1}>
-          ManaPet Shop
-        </Text>
-      </View>
-      <View style={styles.actions}>
-        {showSearch ? (
-          <TouchableOpacity accessibilityLabel="Search" style={styles.iconButton}>
-            <Ionicons name="search-outline" size={24} color="#746A64" />
+      <View style={styles.leftSide}>
+        {showBack ? (
+          <TouchableOpacity accessibilityLabel="Back" style={styles.backButton} onPress={onBackPress}>
+            <Ionicons name="chevron-back" size={24} color={colors.text} />
           </TouchableOpacity>
         ) : null}
+        <View style={styles.brandRow}>
+          <Image source={require('../../assets/Manapet-logo.png')} style={styles.logo} />
+          <Text style={styles.title} numberOfLines={1}>
+            ManaPet Shop
+          </Text>
+        </View>
+      </View>
+      <View style={styles.actions}>
         <TouchableOpacity accessibilityLabel="Cart" style={styles.iconButton} onPress={onCartPress}>
           <Ionicons name="bag-handle-outline" size={23} color={colors.primary} />
         </TouchableOpacity>
@@ -44,12 +47,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between'
   },
+  leftSide: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingRight: 10
+  },
+  backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F7EEE8',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
   brandRow: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingRight: 10
+    minWidth: 0
   },
   logo: {
     width: 34,

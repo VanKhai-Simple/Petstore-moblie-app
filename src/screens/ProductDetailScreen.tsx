@@ -116,9 +116,22 @@ export function ProductDetailScreen({ navigation, route }: any) {
     navigation.navigate('MainTabs', { screen: tab });
   };
 
+  const handleBackPress = () => {
+    if (navigation.canGoBack?.()) {
+      navigation.goBack();
+      return;
+    }
+
+    navigation.navigate('MainTabs', { screen: 'Home' });
+  };
+
   return (
     <View style={styles.root}>
-      <BrandHeader showSearch={false} onCartPress={() => navigation.navigate('MainTabs', { screen: 'Cart' })} />
+      <BrandHeader
+        showBack
+        onBackPress={handleBackPress}
+        onCartPress={() => navigation.navigate('MainTabs', { screen: 'Cart' })}
+      />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {error ? (
           <View style={styles.errorBanner}>

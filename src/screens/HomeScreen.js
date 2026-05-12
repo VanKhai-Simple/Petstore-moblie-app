@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BrandHeader } from '../components/BrandHeader';
 import { FeaturedProductCard, ProductCard } from '../components/ProductCards';
@@ -83,7 +83,6 @@ export default function HomeScreen({ navigation }) {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [search, setSearch] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('all');
 
   const loadHome = async () => {
@@ -121,31 +120,14 @@ export default function HomeScreen({ navigation }) {
   }, []);
 
   const filteredProducts = useMemo(() => {
-    const keyword = search.trim().toLowerCase();
-
     return products.filter((product) => {
       if (selectedCategoryId !== 'all' && product.categoryId !== selectedCategoryId) {
         return false;
       }
 
-      if (!keyword) {
-        return true;
-      }
-
-      const haystack = [
-        product.name,
-        product.description,
-        product.category?.name,
-        product.origin,
-        product.healthStatus
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-
-      return haystack.includes(keyword);
+      return true;
     });
-  }, [products, search, selectedCategoryId]);
+  }, [products, selectedCategoryId]);
 
   const categoryCounts = useMemo(() => {
     return products.reduce((accumulator, product) => {
@@ -197,31 +179,13 @@ export default function HomeScreen({ navigation }) {
   };
 
   const resetFilters = () => {
-    setSearch('');
     setSelectedCategoryId('all');
   };
 
   return (
     <View style={styles.root}>
-      <BrandHeader showSearch={false} onCartPress={() => navigation.navigate('Cart')} />
+      <BrandHeader onCartPress={() => navigation.navigate('Cart')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.searchBox}>
-          <Ionicons name="search-outline" size={19} color={colors.primary} />
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder="Tìm thú cưng, phụ kiện hoặc danh mục"
-            placeholderTextColor={colors.muted}
-            style={styles.input}
-            returnKeyType="search"
-          />
-          {search ? (
-            <TouchableOpacity style={styles.clearButton} onPress={() => setSearch('')}>
-              <Ionicons name="close-circle" size={20} color={colors.muted} />
-            </TouchableOpacity>
-          ) : null}
-        </View>
-
         <View style={styles.statsRow}>
           {stats.map((stat) => (
             <View key={stat.key} style={styles.statCard}>
@@ -338,6 +302,39 @@ export default function HomeScreen({ navigation }) {
 
             <View style={styles.sectionHeader}>
               <View style={styles.sectionCopy}>
+                <Text style={styles.sectionTitle}>Gợi ý hôm nay</Text>
+                <Text style={styles.sectionSubtitle}>{filteredProducts.length} sản phẩm phù hợp</Text>
+              </View>
+              <TouchableOpacity onPress={() => navigation.navigate('Shop')}>
+                <Text style={styles.sectionLink}>Mở shop</Text>
+              </TouchableOpacity>
+            </View>
+
+            {spotlightProduct ? (
+              <FeaturedProductCard product={spotlightProduct} onPress={openProduct} onAdd={addToCart} />
+            ) : null}
+
+            {gridProducts.length ? (
+              <View style={styles.grid}>
+                {gridProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} onPress={openProduct} onAdd={addToCart} />
+                ))}
+              </View>
+            ) : null}
+
+            {!heroProduct ? (
+              <View style={styles.emptyState}>
+                <Ionicons name="grid-outline" size={30} color={colors.primary} />
+                <Text style={styles.emptyTitle}>Không có sản phẩm phù hợp</Text>
+                <Text style={styles.emptyCopy}>Thử đổi danh mục hoặc tải lại dữ liệu từ server.</Text>
+                <TouchableOpacity style={styles.emptyButton} onPress={resetFilters}>
+                  <Text style={styles.emptyButtonText}>Xem tất cả</Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
+
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionCopy}>
                 <Text style={styles.sectionTitle}>Cộng đồng</Text>
                 <Text style={styles.sectionSubtitle}>Những chia sẻ ngắn và góc nhìn từ người nuôi.</Text>
               </View>
@@ -389,39 +386,6 @@ export default function HomeScreen({ navigation }) {
                 </View>
               ))}
             </View>
-
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionCopy}>
-                <Text style={styles.sectionTitle}>Gợi ý hôm nay</Text>
-                <Text style={styles.sectionSubtitle}>{filteredProducts.length} sản phẩm phù hợp</Text>
-              </View>
-              <TouchableOpacity onPress={() => navigation.navigate('Shop')}>
-                <Text style={styles.sectionLink}>Mở shop</Text>
-              </TouchableOpacity>
-            </View>
-
-            {spotlightProduct ? (
-              <FeaturedProductCard product={spotlightProduct} onPress={openProduct} onAdd={addToCart} />
-            ) : null}
-
-            {gridProducts.length ? (
-              <View style={styles.grid}>
-                {gridProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} onPress={openProduct} onAdd={addToCart} />
-                ))}
-              </View>
-            ) : null}
-
-            {!heroProduct ? (
-              <View style={styles.emptyState}>
-                <Ionicons name="search-outline" size={30} color={colors.primary} />
-                <Text style={styles.emptyTitle}>Không có sản phẩm phù hợp</Text>
-                <Text style={styles.emptyCopy}>Thử xóa bộ lọc hoặc đổi từ khóa tìm kiếm.</Text>
-                <TouchableOpacity style={styles.emptyButton} onPress={resetFilters}>
-                  <Text style={styles.emptyButtonText}>Xóa bộ lọc</Text>
-                </TouchableOpacity>
-              </View>
-            ) : null}
           </>
         )}
       </ScrollView>
@@ -438,29 +402,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 122
-  },
-  searchBox: {
-    minHeight: 54,
-    borderRadius: 27,
-    backgroundColor: colors.card,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 16,
-    ...shadow
-  },
-  input: {
-    flex: 1,
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '700'
-  },
-  clearButton: {
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center'
   },
   statsRow: {
     flexDirection: 'row',
