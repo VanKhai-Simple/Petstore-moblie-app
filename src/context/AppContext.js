@@ -9,7 +9,7 @@ export const AppProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isFirstLaunch, setIsFirstLaunch] = useState(true); // mặc định là true để kiểm tra lần đầu
+  const [isFirstLaunch, setIsFirstLaunch] = useState(null);
 
   useEffect(() => {
     appInit();
@@ -58,6 +58,8 @@ export const AppProvider = ({ children }) => {
       await loadSavedSession();
     } catch (error) {
       console.log("App Init Error:", error);
+      firstLaunch = false;
+      setIsFirstLaunch(false);
     } finally {
       if (!firstLaunch) {
         finishSplash();

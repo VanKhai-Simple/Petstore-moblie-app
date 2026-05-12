@@ -95,7 +95,7 @@ export function CartScreen({ navigation }: any) {
               </View>
               <TouchableOpacity style={styles.removeButton} onPress={() => removeFromCart(line.product.id)}>
                 <Ionicons name="trash-outline" size={17} color={colors.muted} />
-                <Text style={styles.removeText}>Remove</Text>
+                <Text style={styles.removeText}>Xóa</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -116,7 +116,6 @@ export function CartScreen({ navigation }: any) {
               <Ionicons name="arrow-forward" size={22} color={colors.white} />
             </LinearGradient>
           </TouchableOpacity>
-          <Text style={styles.note}>Giỏ hàng được lấy trực tiếp từ tài khoản ManaPet của bạn.</Text>
         </View>
       </ScrollView>
     </View>
