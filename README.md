@@ -25,11 +25,11 @@ ManaPet Shop là ứng dụng mobile bán thú cưng và sản phẩm chăm sóc
 - React Native
 - JavaScript / TypeScript
 - React Navigation
-- Axios
+- Axios + Fetch
 - AsyncStorage
 - expo-linear-gradient
 - @expo/vector-icons
-- REST API
+- REST API 
 
 ## 6. Hướng dẫn cài đặt
 1. Cài đặt Node.js và npm.
@@ -104,7 +104,8 @@ OrderDetailScreen:
 <img width="1080" height="2460" alt="image" src="https://github.com/user-attachments/assets/ebfffc44-0a23-42c7-8dc2-36ca3e3796f9" />
 
 ## 10. Link video demo
-<!-- TODO: thêm link video demo -->
+Video cần tải về -->
+https://drive.google.com/file/d/1lttQLB9Mdfxq9yA-vk6RASIe7eGOR29w/view?usp=sharing
 
 ## 11. Remote API
 Swagger:
