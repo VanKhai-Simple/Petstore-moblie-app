@@ -11,7 +11,7 @@ ManaPet Shop là ứng dụng mobile bán thú cưng và sản phẩm chăm sóc
 | --- | --- |
 | Nguyễn Văn Khải | 23810310059 |
 | Nguyễn Đức Mạnh | 23810310053 |
-| Lê Văn Sở | 23810310053 |
+| Lê Văn Sở | 23810310018 |
 
 ## 4. Phân công nhiệm vụ cụ thể
 | Thành viên | Nhiệm vụ |
