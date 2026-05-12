@@ -58,7 +58,7 @@ npm run typecheck
 ## 8. Tài khoản demo (nếu có)
 Tài khoản: tester
 Mật khẩu: 123456
-hoặc có thể đăng ký tài khảon để đăng nhập.
+hoặc có thể đăng ký tài khoản để đăng nhập.
 
 ## 9. Hình ảnh minh họa hệ thống
 OnboardingScreen:
