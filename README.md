@@ -47,8 +47,7 @@ Chạy project bằng lệnh:
 ```bash
 npm start
 ```
-
-Sau đó quét QR bằng Expo Go trên điện thoại hoặc chạy bằng Android/iOS simulator nếu có cấu hình phù hợp.
+Mở Android Studio chạy giả lập điện thoại sau đó vào cmd đang chạy nhấn phim a hoặc quét QR bằng Expo Go trên điện thoại
 
 Kiểm tra type trước khi nộp:
 
@@ -57,7 +56,9 @@ npm run typecheck
 ```
 
 ## 8. Tài khoản demo (nếu có)
-Chưa có tài khoản demo cố định trong repository. Nếu nhóm có tài khoản test từ backend, thêm tại đây.
+Tài khoản: tester
+Mật khẩu: 123456
+hoặc có thể đăng ký tài khảon để đăng nhập.
 
 ## 9. Hình ảnh minh họa hệ thống
 OnboardingScreen:
@@ -118,15 +119,33 @@ Frontend API base URL:
 http://157.66.100.48:5000/api
 ```
 
-Một số API đã sử dụng:
+Toàn bộ API đã sử dụng trong project:
 
+### User/Auth
+- `POST /api/User/Login`
+- `POST /api/User/Register`
+- `POST /api/User/ExternalLogin`
+- `GET /api/User/Profile`
+
+### Product/Category
 - `GET /api/Product/Search`
+- `GET /api/Product/Search?categoryId={categoryId}`
+- `GET /api/Product/Search?search={keyword}`
 - `GET /api/Product/{id}`
 - `GET /api/Category`
+
+### Cart
 - `GET /api/Cart/MyCart`
 - `POST /api/Cart/Add`
 - `PUT /api/Cart/UpdateQuantity`
+- `DELETE /api/Cart/RemoveItem/{productId}`
+- `GET /api/Cart/GetSelected?ids={ids}`
+
+### Order
+- `POST /api/Order/Checkout`
+- `GET /api/Order/MyOrders`
+- `GET /api/Order/Detail/{id}`
+- `GET /api/Order/GetById/{id}`
 
 ## 12. Ghi chú
 - Dự án dùng remote API, không cần backend local.
-- Nếu API không khả dụng, ứng dụng vẫn có thể hiển thị một phần dữ liệu nhờ tài nguyên cục bộ.
