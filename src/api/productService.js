@@ -1,6 +1,6 @@
 import { apiClient, API_BASE_URL } from './client';
-import { products as fallbackProducts } from '../data/mockProducts';
-import { resolveProductImage } from '../data/localAssets';
+
+const placeholderImage = require('../../assets/placeholder.png');
 
 const isUsableImage = (imageUrl) =>
   Boolean(imageUrl && imageUrl.trim() && imageUrl.trim().toLowerCase() !== 'string');
@@ -53,56 +53,57 @@ const mapCategory = (category) =>
       }
     : undefined;
 
-const getFallbackByProduct = (product, index = 0) => {
-  if (product?.categoryId === 1) {
-    return fallbackProducts[index % 6];
-  }
-
-  if (product?.categoryId === 2) {
-    return fallbackProducts[6 + (index % 3)] ?? fallbackProducts[6];
-  }
-
-  return fallbackProducts[index % fallbackProducts.length];
-};
-
 export const mapApiProduct = (product, index = 0) => {
   if (!product) {
-    const fallback = fallbackProducts[index % fallbackProducts.length];
-    return fallback;
+    return null;
   }
 
-  const fallback = getFallbackByProduct(product, index);
   const description =
     product.description ??
     product.fullDescription ??
     product.condition ??
     product.healthStatus ??
-    fallback.description;
-  const imageUrl = resolveDbImageUrl(product) ?? fallback.imageUrl;
+    product.character ??
+    'Chưa có mô tả cho sản phẩm này.';
+  const imageUrl = resolveDbImageUrl(product);
+  const price = Number(product.finalPrice ?? product.discountPrice ?? product.price ?? 0);
+  const originalPrice = Number(product.price ?? price);
+  const stock = Number(product.stock ?? product.stockQuantity ?? 0);
 
   return {
     id: product.id,
-    name: product.name ?? product.productName ?? fallback.name,
-    description: description && description !== 'string' ? description : fallback.description,
-    price: Number(product.finalPrice ?? product.price ?? fallback.price),
+    name: product.name ?? product.productName ?? 'Sản phẩm ManaPet',
+    description: description && description !== 'string' ? description : 'Chưa có mô tả cho sản phẩm này.',
+    price,
     imageUrl,
-    rating: Number(product.rating ?? fallback.rating),
-    reviewCount: Number(product.reviewCount ?? fallback.reviewCount),
-    stock: Number(product.stock ?? product.stockQuantity ?? fallback.stock),
-    originalPrice: Number(product.price ?? fallback.price),
+    rating: Number(product.rating ?? 5),
+    reviewCount: Number(product.reviewCount ?? 0),
+    stock,
+    originalPrice,
     discountPrice: product.discountPrice == null ? null : Number(product.discountPrice),
     discountPercent: product.discountPercent ?? null,
     isDiscount: Boolean(product.isDiscount),
     categoryId: product.categoryId,
     category: mapCategory(product.category),
-    badge: product.badge ?? (product.isDiscount && product.discountPercent ? `${product.discountPercent}% OFF` : fallback.badge),
+    badge: product.badge ?? (product.isDiscount && product.discountPercent ? `-${product.discountPercent}%` : stock <= 3 && stock > 0 ? 'SẮP HẾT' : null),
     createdAt: product.createdAt,
-    image: resolveProductImage(imageUrl),
-    size: fallback.size
+    image: imageUrl ? { uri: imageUrl } : placeholderImage,
+    isPet: product.isPet,
+    ageMonths: product.ageMonths,
+    gender: product.gender,
+    fatherInfo: product.fatherInfo,
+    motherInfo: product.motherInfo,
+    furColor: product.furColor,
+    healthStatus: product.healthStatus,
+    condition: product.condition,
+    dewormed: product.dewormed,
+    origin: product.origin,
+    character: product.character,
+    fullDescription: product.fullDescription
   };
 };
 
-const hydrateProducts = (data) => normalizeApiList(data).map((product, index) => mapApiProduct(product, index));
+const hydrateProducts = (data) => normalizeApiList(data).map((product, index) => mapApiProduct(product, index)).filter(Boolean);
 
 export const productService = {
   async getProducts() {
@@ -127,17 +128,10 @@ export const productService = {
 
   async getCategories() {
     const { data } = await apiClient.get('/Category');
-    return data.map((category) => ({
+    return normalizeApiList(data).map((category) => ({
       id: category.id,
-      name: category.name ?? category.categoryName ?? 'Pet Shop'
+      name: category.name ?? category.categoryName ?? 'Pet Shop',
+      description: category.description
     }));
-  },
-
-  async getCuratedProducts() {
-    try {
-      return await this.getProducts();
-    } catch {
-      return fallbackProducts;
-    }
   }
 };

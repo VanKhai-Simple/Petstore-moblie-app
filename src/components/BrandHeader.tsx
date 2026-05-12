@@ -15,7 +15,7 @@ export function BrandHeader({ showSearch = true, onCartPress }: BrandHeaderProps
   return (
     <View style={[styles.header, { height: 70 + insets.top, paddingTop: insets.top }]}>
       <View style={styles.brandRow}>
-        <Image source={require('../../assets/paw_icon.png')} style={styles.logo} />
+        <Image source={require('../../assets/Manapet-logo.png')} style={styles.logo} />
         <Text style={styles.title} numberOfLines={1}>
           ManaPet Shop
         </Text>
@@ -52,15 +52,15 @@ const styles = StyleSheet.create({
     paddingRight: 10
   },
   logo: {
-    width: 25,
-    height: 25,
+    width: 34,
+    height: 34,
     resizeMode: 'contain'
   },
   title: {
     flexShrink: 1,
     color: '#2F2926',
-    fontSize: 21,
-    fontWeight: '800'
+    fontSize: 18,
+    fontWeight: '900'
   },
   actions: {
     flexDirection: 'row',

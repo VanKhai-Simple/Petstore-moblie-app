@@ -1,683 +1,332 @@
-import React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  ScrollView,
-  TouchableOpacity,
-} from "react-native";
+import React, { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Feather, Ionicons } from '@expo/vector-icons';
+import { BrandHeader } from '../components/BrandHeader';
+import { colors, shadow } from '../constants/theme';
+import { useAppContext } from '../context/AppContext';
+import { profileService } from '../api/profileService';
 
-import { useAppContext } from "../context/AppContext";
-import {
-  MaterialCommunityIcons,
-  Feather,
-} from "@expo/vector-icons";
+const formatCurrency = (amount) => `${Math.round(amount || 0).toLocaleString('vi-VN')} đ`;
 
-export default function ProfileScreen() {
+const formatDate = (value) => {
+  if (!value) return 'Chưa cập nhật';
+  return new Date(value).toLocaleDateString('vi-VN');
+};
 
-  const { logout } = useAppContext();
+export default function ProfileScreen({ navigation }) {
+  const { logout, user } = useAppContext();
+  const [profile, setProfile] = useState(null);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadProfile = async () => {
+      setLoading(true);
+      setError('');
+
+      try {
+        const [apiProfile, apiOrders] = await Promise.all([
+          profileService.getProfile(),
+          profileService.getMyOrders()
+        ]);
+
+        if (!mounted) return;
+        setProfile(apiProfile);
+        setOrders(apiOrders);
+      } catch (loadError) {
+        if (!mounted) return;
+        setProfile(null);
+        setOrders([]);
+        setError(loadError?.message ?? 'Không thể tải hồ sơ từ API.');
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    loadProfile();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const displayProfile = useMemo(() => {
+    return {
+      fullName: profile?.fullName ?? user?.fullName ?? user?.username ?? 'Khách hàng ManaPet',
+      username: profile?.username ?? user?.username ?? 'Chưa cập nhật',
+      email: profile?.email ?? user?.email ?? 'Chưa cập nhật email',
+      phone: profile?.phone ?? user?.phone ?? 'Chưa cập nhật số điện thoại',
+      address: profile?.address ?? 'Chưa cập nhật địa chỉ',
+      avatar: profile?.avatar ?? require('../../assets/ProfileScreen1.png'),
+      birthDate: profile?.birthDate,
+      createdAt: profile?.createdAt
+    };
+  }, [profile, user]);
+
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={{ paddingBottom: 200 }}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.logoRow}>
-          <View style={styles.logoIcon}>
-            <MaterialCommunityIcons
-              name="paw"
-              size={16}
-              color="#8b4d20"
-            />
+    <View style={styles.root}>
+      <BrandHeader onCartPress={() => navigation.navigate('Cart')} />
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {error ? (
+          <View style={styles.errorBanner}>
+            <Ionicons name="cloud-offline-outline" size={17} color={colors.primary} />
+            <Text style={styles.errorText}>Không tải được hồ sơ từ API ManaPet.</Text>
           </View>
+        ) : null}
 
-          <Text style={styles.logo}>
-            Tactile Sanctuary
-          </Text>
-        </View>
-
-        <TouchableOpacity style={styles.bagContainer}>
-          <Feather
-            name="shopping-bag"
-            size={20}
-            color="#4d2d1d"
-          />
-        </TouchableOpacity>
-      </View>
-
-      {/* Profile Section */}
-      <View style={styles.profileSection}>
-        <Image
-          source={require("../../assets/ProfileScreen1.png")}
-          style={styles.avatar}
-        />
-
-        {/* Edit Avatar */}
-        <TouchableOpacity style={styles.editButton}>
-          <Feather
-            name="edit-2"
-            size={14}
-            color="#fff"
-          />
-        </TouchableOpacity>
-
-        <Text style={styles.name}>
-          Eleanor Vance
-        </Text>
-
-        <Text style={styles.member}>
-          Premium Member • Joined Sept 2023
-        </Text>
-      </View>
-
-      {/* Recent Orders */}
-      <View style={styles.ordersHeader}>
-        <Text style={styles.ordersTitle}>
-          Recent Orders
-        </Text>
-
-        <Text style={styles.viewAll}>
-          View All History
-        </Text>
-      </View>
-
-      {/* Order 1 */}
-      <View style={styles.orderCard}>
-        <View style={styles.orderTop}>
-          <Text style={styles.delivered}>
-            Delivered
-          </Text>
-
-          <Text style={styles.orderId}>
-            #ORD-2849
-          </Text>
-        </View>
-
-        <View style={styles.orderContent}>
-          <Image
-            source={require("../../assets/ProfileScreen2.png")}
-            style={styles.productImage}
-          />
-
-          <View style={{ marginLeft: 10 }}>
-            <Text style={styles.productTitle}>
-              Artisan Wool Sweater
-            </Text>
-
-            <Text style={styles.orderDate}>
-              Arrived Oct 12
-            </Text>
+        {loading ? (
+          <View style={styles.loadingState}>
+            <ActivityIndicator color={colors.primary} />
+            <Text style={styles.loadingText}>Đang tải hồ sơ...</Text>
           </View>
-        </View>
-
-        <TouchableOpacity style={styles.buyButton}>
-          <Text style={styles.buyText}>
-            Buy Again
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Order 2 */}
-      <View style={styles.orderCard}>
-        <View style={styles.orderTop}>
-          <Text style={styles.transit}>
-            In Transit
-          </Text>
-
-          <Text style={styles.orderId}>
-#ORD-3012
-          </Text>
-        </View>
-
-        <View style={styles.orderContent}>
-          <Image
-            source={require("../../assets/ProfileScreen3.png")}
-            style={styles.productImage}
-          />
-
-          <View style={{ marginLeft: 10 }}>
-            <Text style={styles.productTitle}>
-              Organic Salmon Treats
-            </Text>
-
-            <Text style={styles.orderDate}>
-              Delivery by Oct 24
-            </Text>
-          </View>
-        </View>
-
-        <TouchableOpacity style={styles.trackButton}>
-          <Text style={styles.trackText}>
-            Track Package
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* SAVED ADDRESSES */}
-      <View style={styles.addressCard}>
-        <View style={styles.sectionRow}>
-          <Feather
-            name="map-pin"
-            size={18}
-            color="#C86B2A"
-          />
-
-          <Text style={styles.sectionTitle}>
-            Saved Addresses
-          </Text>
-        </View>
-
-        {/* HOME */}
-        <View style={styles.addressItem}>
-          <View>
-            <Text style={styles.addressTag}>
-              HOME
-            </Text>
-
-            <Text style={styles.addressText}>
-              2482 Timberbrook Lane
-            </Text>
-
-            <Text style={styles.addressText}>
-              Austin, TX 78701
-            </Text>
-          </View>
-
-          <Feather
-            name="more-vertical"
-            size={18}
-            color="#9C6B4E"
-          />
-        </View>
-
-        {/* OFFICE */}
-        <View style={styles.addressItem}>
-          <View>
-            <Text style={styles.addressTag}>
-              OFFICE
-            </Text>
-
-            <Text style={styles.addressText}>
-              101 Congress Ave, Suite 400
-            </Text>
-
-            <Text style={styles.addressText}>
-              Austin, TX 78701
-            </Text>
-          </View>
-
-          <Feather
-            name="more-vertical"
-            size={18}
-            color="#9C6B4E"
-          />
-        </View>
-
-        <TouchableOpacity style={styles.addAddress}>
-          <Text style={styles.addAddressText}>
-            + Add New Address
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* PAYMENT METHODS */}
-      <View style={styles.paymentCard}>
-        <View style={styles.sectionRow}>
-          <Feather
-            name="credit-card"
-            size={18}
-            color="#C86B2A"
-          />
-
-          <Text style={styles.sectionTitle}>
-            Payment Methods
-          </Text>
-        </View>
-
-        <View style={styles.creditCard}>
-          <View style={styles.cardTop}>
-            {/* CONTACTLESS ICON */}
-            <View style={styles.contactlessCircle}>
-              <MaterialCommunityIcons
-                name="contactless-payment"
-                size={14}
-                color="#fff"
-              />
+        ) : (
+          <>
+            <View style={styles.profileCard}>
+              <Image source={displayProfile.avatar} style={styles.avatar} />
+              <View style={styles.profileInfo}>
+                <Text style={styles.kicker}>TÀI KHOẢN</Text>
+                <Text style={styles.name} numberOfLines={2}>{displayProfile.fullName}</Text>
+                <Text style={styles.member}>Tham gia: {formatDate(displayProfile.createdAt)}</Text>
+              </View>
             </View>
 
-            <View style={styles.cardChip} />
-          </View>
-<Text style={styles.cardNumber}>
-            •••• •••• •••• 5821
-          </Text>
+            <View style={styles.panel}>
+              <View style={styles.panelHeader}>
+                <Text style={styles.sectionTitle}>Thông tin liên hệ</Text>
+              </View>
 
-          <View style={styles.cardRow}>
-            <Text style={styles.cardName}>
-              ELEANOR VANCE
-            </Text>
+              <InfoRow icon="mail-outline" label="Email" value={displayProfile.email} />
+              <View style={styles.divider} />
+              <InfoRow icon="call-outline" label="Điện thoại" value={displayProfile.phone} />
+              <View style={styles.divider} />
+              <InfoRow icon="map-pin" label="Địa chỉ" value={displayProfile.address} valueLines={2} />
+            </View>
 
-            <Text style={styles.cardDate}>
-              08/26
-            </Text>
-          </View>
+            <View style={styles.panel}>
+              <View style={styles.panelHeader}>
+                <Text style={styles.sectionTitle}>Thông tin tài khoản</Text>
+                <Text style={styles.metaText}>Hồ sơ</Text>
+              </View>
+
+              <InfoRow icon="person-outline" label="Tên đăng nhập" value={displayProfile.username} />
+              <View style={styles.divider} />
+              <InfoRow icon="calendar-outline" label="Ngày sinh" value={displayProfile.birthDate ? formatDate(displayProfile.birthDate) : 'Chưa cập nhật'} />
+              <View style={styles.divider} />
+              <InfoRow icon="time-outline" label="Tham gia" value={formatDate(displayProfile.createdAt)} />
+            </View>
+
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Đơn hàng gần đây</Text>
+              <Text style={styles.metaText}>{orders.length} đơn</Text>
+            </View>
+
+            {orders.slice(0, 3).map((order) => (
+              <View key={order.id} style={styles.orderCard}>
+                <View style={styles.orderTop}>
+                  <View style={styles.statusPill}>
+                    <Text style={styles.statusText}>{order.status}</Text>
+                  </View>
+                  <Text style={styles.orderId}>#{order.id}</Text>
+                </View>
+                <Text style={styles.orderDate}>{formatDate(order.orderDate)}</Text>
+                {order.firstProduct ? (
+                  <View style={styles.productRow}>
+                    <Image source={order.firstProduct.image} style={styles.productImage} />
+                    <View style={styles.productInfo}>
+                      <Text style={styles.productName} numberOfLines={2}>{order.firstProduct.name}</Text>
+                      <Text style={styles.productMeta}>{order.details.length} sản phẩm trong đơn</Text>
+                    </View>
+                  </View>
+                ) : null}
+                <Text style={styles.totalText}>Tổng tiền: {formatCurrency(order.totalAmount)}</Text>
+              </View>
+            ))}
+
+            {!orders.length ? (
+              <View style={styles.emptyOrders}>
+                <Ionicons name="receipt-outline" size={28} color={colors.primary} />
+                <Text style={styles.emptyTitle}>Chưa có đơn hàng</Text>
+              </View>
+            ) : null}
+
+            <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
+              <Feather name="log-out" size={18} color={colors.white} />
+              <Text style={styles.logoutText}>Đăng xuất</Text>
+            </TouchableOpacity>
+          </>
+        )}
+      </ScrollView>
+    </View>
+  );
+}
+
+function InfoRow({ icon, label, value, valueLines = 1 }) {
+  return (
+    <View style={styles.infoRow}>
+      <View style={styles.infoLeft}>
+        <View style={styles.infoIconWrap}>
+          <Ionicons name={icon} size={17} color={colors.primary} />
         </View>
-
-        {/* LINK PAYMENT */}
-        <TouchableOpacity style={styles.linkPayment}>
-          <View style={styles.plusCircle}>
-            <Feather
-              name="plus"
-              size={11}
-              color="#C86B2A"
-            />
-          </View>
-
-          <Text style={styles.linkPaymentText}>
-            Link New Payment
-          </Text>
-        </TouchableOpacity>
+        <Text style={styles.infoLabel}>{label}</Text>
       </View>
-
-      {/* ACCOUNT SETTINGS */}
-      <TouchableOpacity style={styles.accountBtn}>
-        <Text style={styles.accountText}>
-          Account Settings
-        </Text>
-      </TouchableOpacity>
-
-      {/* LOGOUT */}
-      <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
-        <Feather
-          name="log-out"
-          size={18}
-          color="#fff"
-          style={{ marginRight: 8 }}
-        />
-
-        <Text style={styles.logoutText}>
-          Logout
-        </Text>
-      </TouchableOpacity>
-
-      <Text style={styles.version}>
-        Version 2.4.1 • Data Privacy Protected
+      <Text
+        style={styles.infoValue}
+        numberOfLines={valueLines}
+        ellipsizeMode={valueLines === 1 ? 'middle' : 'tail'}
+      >
+        {value}
       </Text>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F4EFEA",
-    paddingHorizontal: 20,
-  },
-
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 50,
-    marginBottom: 18,
-  },
-
-  logoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  logoIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#eddcd1",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 8,
-  },
-
-  logo: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#4d2d1d",
-  },
-
-  bagContainer: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  profileSection: {
-    backgroundColor: "#E9DED6",
-    borderRadius: 20,
-    alignItems: "center",
-    paddingVertical: 30,
-    marginBottom: 20,
-    position: "relative",
-  },
-
-  avatar: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    marginBottom: 10,
-  },
-
-  editButton: {
-    position: "absolute",
-    top: 100,
-    right: 120,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "#C86B2A",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 3,
-    borderColor: "#E9DED6",
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    elevation: 4,
-  },
-
-  name: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#4A3428",
-  },
-
-  member: {
-    fontSize: 13,
-    color: "#8E6F5A",
-    marginTop: 4,
-  },
-
-  ordersHeader: {
-flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-
-  ordersTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#4A3428",
-  },
-
-  viewAll: {
-    fontSize: 13,
-    color: "#C86B2A",
-  },
-
-  orderCard: {
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    padding: 15,
-    marginBottom: 20,
-  },
-
-  orderTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 10,
-  },
-
-  delivered: {
-    backgroundColor: "#BEE8C8",
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 10,
-    fontSize: 12,
-    color: "#2F7D46",
-  },
-
-  transit: {
-    backgroundColor: "#F7C6A8",
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 10,
-    fontSize: 12,
-    color: "#A55222",
-  },
-
-  orderId: {
-    fontSize: 12,
-    color: "#8E6F5A",
-  },
-
-  orderContent: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  productImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 10,
-  },
-
-  productTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#4A3428",
-  },
-
-  orderDate: {
-    fontSize: 12,
-    color: "#8E6F5A",
-  },
-
-  buyButton: {
-    backgroundColor: "#B7D3EA",
-    padding: 10,
-    borderRadius: 15,
-    marginTop: 15,
-    alignItems: "center",
-  },
-
-  buyText: {
-    color: "#1A4E72",
-    fontWeight: "600",
-  },
-
-  trackButton: {
-    backgroundColor: "#F1DED2",
-    padding: 10,
-    borderRadius: 15,
-    marginTop: 15,
-    alignItems: "center",
-  },
-
-  trackText: {
-    color: "#7A3E1D",
-    fontWeight: "600",
-  },
-
-  sectionRow: {
-    flexDirection: "row",
-    alignItems: "center",
+  root: { flex: 1, backgroundColor: colors.background },
+  content: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 118 },
+  errorBanner: {
+    minHeight: 42,
+    borderRadius: 21,
+    backgroundColor: '#FFE8D8',
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
-    marginBottom: 15,
+    paddingHorizontal: 16,
+    marginBottom: 18
   },
-
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#4A3428",
+  errorText: { color: colors.text, fontSize: 12, fontWeight: '800' },
+  loadingState: {
+    minHeight: 320,
+    borderRadius: 28,
+    backgroundColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    ...shadow
   },
-
-  addressCard: {
-    backgroundColor: "#E9DED6",
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 20,
+  loadingText: { color: colors.muted, fontSize: 14, fontWeight: '800' },
+  profileCard: {
+    minHeight: 154,
+    borderRadius: 28,
+    backgroundColor: colors.card,
+    padding: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    ...shadow
   },
-
-  addressItem: {
-    backgroundColor: "#F4EFEA",
-    borderRadius: 16,
-    padding: 15,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
+  avatar: { width: 96, height: 96, borderRadius: 48, backgroundColor: '#F7EEE8' },
+  profileInfo: { flex: 1 },
+  kicker: { color: colors.primary, fontSize: 11, fontWeight: '900' },
+  name: { color: colors.text, fontSize: 25, lineHeight: 30, fontWeight: '900', marginTop: 6 },
+  member: { color: colors.muted, fontSize: 12, fontWeight: '800', marginTop: 6 },
+  panelHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12
   },
-
-  addressTag: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#C86B2A",
-    marginBottom: 3,
+  infoRow: {
+    minHeight: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
   },
-
-  addressText: {
+  infoLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingRight: 12,
+    minWidth: 0
+  },
+  infoIconWrap: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#FFE9DA',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  infoLabel: { color: colors.text, fontSize: 13, fontWeight: '900' },
+  infoValue: {
+    flex: 1,
+    color: colors.muted,
     fontSize: 13,
-    color: "#5B4636",
+    lineHeight: 18,
+    fontWeight: '800',
+    textAlign: 'right',
+    minWidth: 0
   },
-
-  addAddress: {
-    marginTop: 8,
+  divider: {
+    height: 1,
+    backgroundColor: colors.line,
+    marginVertical: 2
   },
-
-  addAddressText: {
-    color: "#C86B2A",
-    fontWeight: "600",
+  panel: {
+    borderRadius: 24,
+    backgroundColor: colors.card,
+    padding: 18,
+    marginTop: 16,
+    ...shadow
   },
-
-  paymentCard: {
-    backgroundColor: "#E9DED6",
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 20,
+  sectionRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  sectionTitle: { color: colors.text, fontSize: 19, fontWeight: '900' },
+  addressText: { color: colors.muted, fontSize: 14, lineHeight: 22, fontWeight: '700' },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 28,
+    marginBottom: 14
   },
-
-  creditCard: {
-    backgroundColor: "#111",
-    borderRadius: 18,
-    padding: 20,
-    marginBottom: 15,
-  },
-
-  cardTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 18,
-  },
-
-  /* CONTACTLESS */
-  contactlessCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#000",
-    borderWidth: 3,
-    borderColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  cardChip: {
-    width: 34,
-    height: 18,
-    borderRadius: 10,
-backgroundColor: "#444",
-  },
-
-  cardNumber: {
-    color: "#fff",
-    fontSize: 18,
-    letterSpacing: 2,
-    marginBottom: 10,
-  },
-
-  cardRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-
-  cardName: {
-    color: "#ccc",
-    fontSize: 12,
-  },
-
-  cardDate: {
-    color: "#ccc",
-    fontSize: 12,
-  },
-
-  linkPayment: {
-    borderWidth: 1,
-    borderColor: "#E0A680",
-    borderStyle: "dashed",
-    borderRadius: 20,
-    padding: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  plusCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: "#C86B2A",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 6,
-  },
-
-  linkPaymentText: {
-    color: "#C86B2A",
-    fontWeight: "600",
-    fontSize: 14,
-  },
-
-  accountBtn: {
-    backgroundColor: "#EAD7C9",
+  metaText: { color: colors.muted, fontSize: 12, fontWeight: '800' },
+  orderCard: {
+    borderRadius: 24,
+    backgroundColor: colors.card,
     padding: 16,
-    borderRadius: 20,
-    alignItems: "center",
-    marginBottom: 15,
+    marginBottom: 14,
+    ...shadow
   },
-
-  accountText: {
-    fontWeight: "600",
-    color: "#6B3E1F",
+  orderTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  statusPill: {
+    minHeight: 28,
+    borderRadius: 14,
+    backgroundColor: '#FFE8D8',
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center'
   },
-
+  statusText: { color: colors.primary, fontSize: 12, fontWeight: '900' },
+  orderId: { color: colors.muted, fontSize: 12, fontWeight: '800' },
+  orderDate: { color: colors.muted, fontSize: 12, fontWeight: '700', marginTop: 10 },
+  productRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12 },
+  productImage: { width: 58, height: 58, borderRadius: 16, backgroundColor: '#F7EEE8' },
+  productInfo: { flex: 1 },
+  productName: { color: colors.text, fontSize: 14, lineHeight: 19, fontWeight: '900' },
+  productMeta: { color: colors.muted, fontSize: 12, fontWeight: '700', marginTop: 4 },
+  totalText: { color: colors.primary, fontSize: 15, fontWeight: '900', marginTop: 14 },
+  emptyOrders: {
+    minHeight: 150,
+    borderRadius: 24,
+    backgroundColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    ...shadow
+  },
+  emptyTitle: { color: colors.text, fontSize: 17, fontWeight: '900' },
   logoutBtn: {
-    backgroundColor: "#F26745",
-    padding: 16,
+    height: 50,
     borderRadius: 25,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 10,
+    backgroundColor: colors.danger,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 22
   },
-
-  logoutText: {
-    color: "#fff",
-    fontWeight: "700",
-  },
-
-  version: {
-    textAlign: "center",
-    fontSize: 11,
-    color: "#9C8A7C",
-    marginBottom: 30,
-  },
+  logoutText: { color: colors.white, fontSize: 14, fontWeight: '900' }
 });

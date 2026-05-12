@@ -5,7 +5,6 @@ import { BrandHeader } from '../components/BrandHeader';
 import { FeaturedProductCard, ProductCard } from '../components/ProductCards';
 import { colors, shadow } from '../constants/theme';
 import { useCart } from '../context/CartContext';
-import { products as fallbackProducts } from '../data/mockProducts';
 import { productService } from '../api/productService';
 
 type Product = any;
@@ -14,7 +13,7 @@ const baseCategoryOptions = [
   {
     id: 'all',
     label: 'Tất cả',
-    title: 'ManaPet Store',
+    title: 'ManaPet Shop',
     kicker: 'CỬA HÀNG THÚ CƯNG',
     subtitle: 'Danh sách sản phẩm và thú cưng được lấy trực tiếp từ ManaPet.'
   },
@@ -163,16 +162,16 @@ export function ProductListScreen({ navigation }: any) {
           return;
         }
 
-        setProducts(apiProducts.length ? apiProducts : fallbackProducts);
+        setProducts(apiProducts);
         setCategories(apiCategories);
       } catch (loadError: any) {
         if (!mounted) {
           return;
         }
 
-        setProducts(fallbackProducts);
+        setProducts([]);
         setCategories([]);
-        setError(loadError?.message ?? 'Unable to load live products.');
+        setError(loadError?.message ?? 'Không thể tải sản phẩm từ API.');
       } finally {
         if (mounted) {
           setLoading(false);
@@ -253,7 +252,7 @@ export function ProductListScreen({ navigation }: any) {
         {error ? (
           <View style={styles.errorBanner}>
             <Ionicons name="cloud-offline-outline" size={17} color={colors.primary} />
-            <Text style={styles.errorText}>Không tải được API. Đang hiển thị dữ liệu dự phòng.</Text>
+            <Text style={styles.errorText}>Không tải được dữ liệu từ API ManaPet.</Text>
           </View>
         ) : null}
 

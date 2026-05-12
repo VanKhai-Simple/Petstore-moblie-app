@@ -13,10 +13,8 @@ export default function SplashScreen() {
         style={styles.overlay}
       >
         <View style={styles.logoContainer}>
-          <LinearGradient colors={['#A65215', '#F2A365']} style={styles.logoCircle}>
-            <Image source={require('../../assets/paw_icon.png')} style={styles.pawIcon} />
-          </LinearGradient>
-          <Text style={styles.brandName}>PET SHOP</Text>
+          <Image source={require('../../assets/Manapet-logo.png')} style={styles.logoImage} />
+          <Text style={styles.brandName}>ManaPet Shop</Text>
           <Text style={styles.slogan}>Companion for your life</Text>
         </View>
 
@@ -34,10 +32,9 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   overlay: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  logoContainer: { alignItems: 'center' },
-  logoCircle: { width: 120, height: 120, borderRadius: 60, justifyContent: 'center', alignItems: 'center', elevation: 10 },
-  pawIcon: { width: 60, height: 60, tintColor: 'white' },
-  brandName: { color: '#402008', fontSize: 28, fontWeight: 'bold', marginTop: 15 },
+  logoContainer: { alignItems: 'center', paddingHorizontal: 24 },
+  logoImage: { width: 220, height: 220, resizeMode: 'contain' },
+  brandName: { color: '#402008', fontSize: 28, fontWeight: 'bold', marginTop: 8 },
   slogan: { color: '#A65215', fontSize: 16, fontStyle: 'italic' },
   footer: { position: 'absolute', bottom: 50, alignItems: 'center' },
   loadingBarContainer: { width: 150, height: 4, backgroundColor: '#EEE', borderRadius: 2, marginBottom: 10, overflow: 'hidden' },

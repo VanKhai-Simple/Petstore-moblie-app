@@ -2,22 +2,22 @@ import 'dotenv/config'; // Nạp biến môi trường từ file .env
 
 export default {
   "expo": {
-    "name": "Petstore_mobile_Blank_template",
-    "slug": "Petstore_mobile_Blank_template",
+    "name": "ManaPet Shop",
+    "slug": "mana-pet-shop",
     "version": "1.0.0",
     "scheme": "petstore-mobile",
     "orientation": "portrait",
-    "icon": "./assets/paw_icon.png",
+    "icon": "./assets/Manapet-logo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/Manapet-logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     
     "facebookAppId": process.env.FACEBOOK_APP_ID, 
-    "facebookDisplayName": "Pet Shop App",
+    "facebookDisplayName": "ManaPet Shop",
     "facebookScheme": `fb${process.env.FACEBOOK_APP_ID}`,
     
     "ios": {
@@ -27,13 +27,13 @@ export default {
     "android": {
       "package": "com.vankhai.petstore",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/paw_icon.png",
+        "foregroundImage": "./assets/Manapet-logo.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true
     },
     "web": {
-      "favicon": "./assets/paw_icon.png"
+      "favicon": "./assets/Manapet-logo.png"
     },
     "plugins": [
       "expo-web-browser"

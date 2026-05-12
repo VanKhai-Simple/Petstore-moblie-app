@@ -1,21 +1,21 @@
 {
   "expo": {
-    "name": "Pet store",
-    "slug": "Pet store",
+    "name": "ManaPet Shop",
+    "slug": "mana-pet-shop",
     "version": "1.0.0",
     "scheme": "petstore-mobile",
     "orientation": "portrait",
-    "icon": "./assets/paw_icon.png",
+    "icon": "./assets/Manapet-logo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/Manapet-logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
 
     "facebookAppId": "123456789012345",
-    "facebookDisplayName": "Pet Shop App",
+    "facebookDisplayName": "ManaPet Shop",
     "facebookScheme": "fb123456789012345",
 
     "ios": {
@@ -25,13 +25,13 @@
     "android": {
       "package": "com.vankhai.petstore",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/paw_icon.png",
+        "foregroundImage": "./assets/Manapet-logo.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true
     },
     "web": {
-      "favicon": "./assets/paw_icon.png"
+      "favicon": "./assets/Manapet-logo.png"
     },
     "plugins": [
       "expo-web-browser"
