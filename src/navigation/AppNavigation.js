@@ -10,8 +10,12 @@ import SplashScreen from '../screens/SplashScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
+import { CartScreen } from '@/screens/CartScreen';
 import { ProductDetailScreen } from '../screens/ProductDetailScreen';
-
+import CheckoutScreen from '@/screens/CheckoutScreen';
+import SuccessScreen from '@/screens/SuccessScreen';
+import MyOrdersScreen from '@/screens/MyOrdersScreen';
+import OrderDetailScreen from '@/screens/OrderDetailScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 
 const Stack = createStackNavigator();
@@ -44,8 +48,13 @@ export default function AppNavigation() {
         // 4. Luồng khi đã vào app thành công
         <>
           <Stack.Screen name="MainTabs" component={TabNavigator} />
+          <Stack.Screen name="Cart" component={CartScreen} />
           <Stack.Screen name="Profile" component={ProfileScreen} />
           <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+          <Stack.Screen name="Checkout" component={CheckoutScreen} />
+          <Stack.Screen name="Success" component={SuccessScreen} />
+          <Stack.Screen name="MyOrders" component={MyOrdersScreen} />
+          <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
           {/* <Stack.Screen name="Filter" component={FilterScreen} options={{ presentation: 'modal' }} /> */}
         </>
       )}

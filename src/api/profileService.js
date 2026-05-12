@@ -29,23 +29,51 @@ const normalizeList = (data, key) => {
   return [];
 };
 
+// const mapOrder = (order) => {
+//   const details = normalizeList(order?.orderDetails, 'items');
+//   const firstDetail = details[0];
+//   const firstProduct = firstDetail?.product ? mapApiProduct(firstDetail.product) : null;
+
+//   return {
+//     id: order.id,
+//     status: order.status ?? 'Đang xử lý',
+//     paymentStatus: order.paymentStatus,
+//     paymentMethod: order.paymentMethod,
+//     orderDate: order.orderDate,
+//     totalAmount: Number(order.totalAmount ?? 0),
+//     address: order.address,
+//     phoneNumber: order.phoneNumber,
+//     fullName: order.fullName,
+//     details,
+//     firstProduct
+//   };
+// };
+
 const mapOrder = (order) => {
-  const details = normalizeList(order?.orderDetails, 'items');
-  const firstDetail = details[0];
-  const firstProduct = firstDetail?.product ? mapApiProduct(firstDetail.product) : null;
+  // Lấy danh sách chi tiết đơn hàng từ JSON mới
+  const details = (order?.orderDetails || []).map(item => ({
+    id: item.id,
+    productId: item.productId,
+    quantity: item.quantity, // "quantity": 1
+    price: item.price,
+    name: item.productName,  // "productName": "Mèo Anh lông dài..."
+    // Sử dụng resolveImage để xử lý URL từ Cloudinary hoặc server local
+    image: resolveImage(item.mainImage) 
+  }));
+
+  const firstItem = details[0] || null;
 
   return {
     id: order.id,
-    status: order.status ?? 'Đang xử lý',
-    paymentStatus: order.paymentStatus,
-    paymentMethod: order.paymentMethod,
+    status: order.status ?? 'Chờ xác nhận',
     orderDate: order.orderDate,
-    totalAmount: Number(order.totalAmount ?? 0),
-    address: order.address,
-    phoneNumber: order.phoneNumber,
+    totalAmount: order.totalAmount,
     fullName: order.fullName,
-    details,
-    firstProduct
+    phoneNumber: order.phoneNumber,
+    address: order.address,
+    note: order.note,
+    details: details, 
+    firstItem: firstItem // Chứa đầy đủ name, image, quantity của món đầu tiên
   };
 };
 
@@ -68,6 +96,9 @@ export const profileService = {
 
   async getMyOrders() {
     const { data } = await apiClient.get('/Order/MyOrders');
-    return normalizeList(data, 'orders').map(mapOrder);
+    // Vì JSON trả về là một Mảng [ {...}, {...} ] trực tiếp
+    // Nên chỉ cần map thẳng, không cần qua normalizeList nếu data đã là array
+    const ordersArray = Array.isArray(data) ? data : (data?.orders || []);
+    return ordersArray.map(mapOrder);
   }
 };

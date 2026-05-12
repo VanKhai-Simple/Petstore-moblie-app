@@ -120,7 +120,13 @@ export default function ProfileScreen({ navigation }) {
 
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Đơn hàng gần đây</Text>
-              <Text style={styles.metaText}>{orders.length} đơn</Text>
+              <TouchableOpacity 
+                style={styles.viewAllBtn} 
+                onPress={() => navigation.navigate('MyOrders')}
+              >
+                <Text style={styles.viewAllText}>Xem tất cả</Text>
+                {/* <Ionicons name="chevron-forward" size={14} color={colors.primary} /> */}
+              </TouchableOpacity>
             </View>
 
             {orders.slice(0, 3).map((order) => (

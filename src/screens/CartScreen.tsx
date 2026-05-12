@@ -24,6 +24,20 @@ export function CartScreen({ navigation }: any) {
   const { lines, itemCount, subtotal, isSyncing, syncError, refreshCart, removeFromCart, updateQuantity } = useCart();
   const total = subtotal + shipping;
 
+  // Hàm xử lý khi nhấn thanh toán
+  const handleCheckoutPress = () => {
+    if (lines.length === 0) return;
+
+    // Lấy danh sách ID từ các item trong giỏ hàng (khớp với DTO của ông)
+    // Lưu ý: Tùy vào cấu trúc CartLine của ông, ID có thể là line.id hoặc line.product.id
+    const selectedIds = lines.map(line => line.product.id);
+
+    navigation.navigate('Checkout', {
+      selectedIds: selectedIds,
+      totalPrice: subtotal
+    });
+  };
+
   return (
     <View style={styles.root}>
       <BrandHeader showSearch={false} onCartPress={() => navigation.navigate('Cart')} />
@@ -96,7 +110,7 @@ export function CartScreen({ navigation }: any) {
             <Text style={styles.totalLabel}>Tổng cộng</Text>
             <Text style={styles.totalValue}>{formatCurrency(total)}</Text>
           </View>
-          <TouchableOpacity activeOpacity={0.9} disabled={!lines.length}>
+          <TouchableOpacity activeOpacity={0.9} disabled={!lines.length} onPress={handleCheckoutPress}>
             <LinearGradient colors={['#C46312', '#FF9C66']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.checkout}>
               <Text style={styles.checkoutText}>Tiến hành thanh toán</Text>
               <Ionicons name="arrow-forward" size={22} color={colors.white} />

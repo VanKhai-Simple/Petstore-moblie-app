@@ -19,12 +19,41 @@ const fetchWithTimeout = async (url, options = {}) => {
 };
 
 export const userApi = {
-  login: (data) => fetchWithTimeout('/User/Login', { method: 'POST', body: JSON.stringify(data) }),
-  register: (data) => fetchWithTimeout('/User/Register', { method: 'POST', body: JSON.stringify(data) }),
+  login: (data) => fetchWithTimeout(
+    '/User/Login', 
+      { method: 'POST', 
+        body: JSON.stringify(data) 
+      }),
+  register: (data) => fetchWithTimeout(
+    '/User/Register', 
+      { method: 'POST',
+         body: JSON.stringify(data) 
+      }),
 
-  // --- THÊM HÀM NÀY CHO ĐỒ ÁN PET SHOP ---
-  loginSocial: (data) => fetchWithTimeout('/User/ExternalLogin', { 
-    method: 'POST', 
-    body: JSON.stringify(data) // data này bao gồm { provider, token }
+  loginSocial: (data) => fetchWithTimeout(
+    '/User/ExternalLogin',
+     { method: 'POST', 
+        body: JSON.stringify(data)
+      }),
+};
+
+export const orderApi = {
+  // Checkout gửi kèm token từ AsyncStorage
+  checkout: (data, token) => fetchWithTimeout('/Order/Checkout', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify(data)
   }),
+
+  // Lấy danh sách đơn hàng của tôi
+  getMyOrders: (token) => fetchWithTimeout('/Order/MyOrders', {
+    method: 'GET',
+    headers: { 'Authorization': `Bearer ${token}` }
+  }),
+
+  // Chi tiết đơn hàng
+  getOrderDetail: (id, token) => fetchWithTimeout(`/Order/GetById/${id}`, {
+    method: 'GET',
+    headers: { 'Authorization': `Bearer ${token}` }
+  })
 };
