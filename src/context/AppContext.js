@@ -9,7 +9,7 @@ export const AppProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isFirstLaunch, setIsFirstLaunch] = useState(true); // mặc định là true để kiểm tra lần đầu
+  const [isFirstLaunch, setIsFirstLaunch] = useState(null);
 
   useEffect(() => {
     appInit();
@@ -41,11 +41,8 @@ export const AppProvider = ({ children }) => {
     try {
       // 1. Kiểm tra Onboarding (đã xem giới thiệu chưa)
       const launchedValue = await AsyncStorage.getItem('alreadyLaunched');
-
-// firstLaunch = launchedValue === null;  // tạm tắt logic kiểm tra lần đầu
-firstLaunch = false;                     // ép app không vào onboarding
-
-setIsFirstLaunch(firstLaunch);
+      firstLaunch = launchedValue !== 'true';
+      setIsFirstLaunch(firstLaunch);
 
       // Lần đầu mở app: hiển thị Onboarding trước, chưa chạy Splash.
       if (firstLaunch) {
@@ -58,6 +55,8 @@ setIsFirstLaunch(firstLaunch);
       await loadSavedSession();
     } catch (error) {
       console.log("App Init Error:", error);
+      firstLaunch = false;
+      setIsFirstLaunch(false);
     } finally {
       if (!firstLaunch) {
         finishSplash();
