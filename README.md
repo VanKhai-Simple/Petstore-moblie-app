@@ -30,7 +30,8 @@ ManaPet Shop là ứng dụng mobile bán thú cưng và sản phẩm chăm sóc
 - expo-linear-gradient
 - @expo/vector-icons
 - REST API 
-
+- JWT Authentication
+- 
 ## 6. Hướng dẫn cài đặt
 1. Cài đặt Node.js và npm.
 2. Tải hoặc clone project về máy.
@@ -111,13 +112,13 @@ https://drive.google.com/file/d/1lttQLB9Mdfxq9yA-vk6RASIe7eGOR29w/view?usp=shari
 Swagger:
 
 ```text
-http://157.66.100.48:5000/swagger/index.html
+https://api.manapet.click/swagger/index.html
 ```
 
 Frontend API base URL:
 
 ```text
-http://157.66.100.48:5000/api
+https://api.manapet.click/api
 ```
 
 Toàn bộ API đã sử dụng trong project:
